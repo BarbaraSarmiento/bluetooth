@@ -3,4 +3,8 @@
     <button (click)="turnOn()">Encender LED</button>
     <button (click)="turnOff()">Apagar LED</button>
   </div>
+  <div class="log-container">
+    <h3>Logs:</h3>
+    <div *ngFor="let log of logs">{{ log }}</div>
+  </div>
   
