@@ -50,17 +50,19 @@ export class BluetoothService {
       this.addLog('No hay dispositivo conectado');
       return;
     }
-
+  
     try {
+      this.addLog('Enviando datos...');
       await BluetoothLe.write({
         deviceId: this.deviceId,
         service: this.SERVICE_UUID,
         characteristic: this.CHARACTERISTIC_UUID,
-        value: btoa(value),
+        value: value,
       });
       this.addLog('Enviado: ' + value);
     } catch (error) {
       this.addLog('Error al enviar datos: ' + error);
     }
   }
+  
 }
