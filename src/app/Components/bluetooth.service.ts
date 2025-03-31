@@ -46,30 +46,31 @@ export class BluetoothService {
   }
 
   async sendData(value: string) {
-    const encoder = new TextEncoder();
-    const valuebit = encoder.encode(value);
-  
-    // Create a DataView from the Uint8Array
-    const dataView = new DataView(valuebit.buffer);
-  
     if (!this.deviceId) {
       this.addLog('No hay dispositivo conectado');
       return;
     }
   
     try {
+      const encoder = new TextEncoder();
+      const valuebit = encoder.encode(value);
+  
+      // Convertir a Base64
+      const base64Value = btoa(String.fromCharCode(...valuebit));
+  
       this.addLog('Enviando datos...');
       await BluetoothLe.write({
         deviceId: this.deviceId,
         service: this.SERVICE_UUID,
         characteristic: this.CHARACTERISTIC_UUID,
-        value: dataView,  // Pass DataView here
+        value: base64Value,  // Ahora en formato Base64
       });
       this.addLog('Enviado: ' + value);
     } catch (error) {
       this.addLog('Error al enviar datos: ' + error);
     }
   }
+  
   
   
 }
