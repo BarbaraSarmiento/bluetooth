@@ -1,0 +1,11 @@
+<!--src/app/Components/bluetooth/bluetooth.component.html-->
+<div style="text-align:center;">
+  <h1>Medición de Peso</h1>
+
+  <div *ngIf="weight !== null">
+    <p>Peso: {{ weight }} kg</p>
+  </div>
+
+  <button (click)="connectDevice()">Conectar a ESP32</button>
+  <button (click)="disconnectDevice()">Desconectar</button>
+</div>

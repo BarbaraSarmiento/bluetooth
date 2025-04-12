@@ -1,17 +1,16 @@
-//src/app/Components/home/home.component.ts
 import { Component, OnInit } from '@angular/core';
 import { BluetoothService } from '../bluetooth.service';
 import { NgFor, NgForOf } from '@angular/common';
 import { BluetoothComponent } from '../bluetooth/bluetooth.component';
 import { UbicacionComponent } from '../ubicacion/ubicacion.component';
 import { RouterOutlet } from '@angular/router';
+
 @Component({
-  selector: 'app-home',
-  imports: [NgFor,NgForOf,BluetoothComponent, UbicacionComponent,RouterOutlet, ],
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  selector: 'app-navbar',
+  imports: [NgFor,NgForOf,BluetoothComponent, UbicacionComponent,RouterOutlet, ],  templateUrl: './navbar.component.html',
+  styleUrl: './navbar.component.css'
 })
-export class HomeComponent implements OnInit {
+export class NavbarComponent  implements OnInit {
   logs: string[] = [];
   isMenuActive = false;
 
