@@ -1,70 +1,86 @@
-//src/app/Components/ubicacion/ubicacion.component.ts
+import { Geolocation } from '@capacitor/geolocation';
 import { Component } from '@angular/core';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { BluetoothService } from '../bluetooth.service';
+import { CommonModule } from '@angular/common'; // 👈 esto es clave
+
 @Component({
   selector: 'app-ubicacion',
-  imports: [GoogleMapsModule,],
+  standalone: true,
+  imports: [CommonModule, GoogleMapsModule],
   templateUrl: './ubicacion.component.html',
-  styleUrl: './ubicacion.component.css'
+  styleUrls: ['./ubicacion.component.css']
 })
 export class UbicacionComponent {
+  // Centro del mapa
   center: google.maps.LatLngLiteral = { lat: -2.9001285, lng: -79.0058965 };
   zoom = 12;
+
+  // Posiciones
   robotLocation: google.maps.LatLngLiteral = { lat: 0, lng: 0 };
   userLocation: google.maps.LatLngLiteral = { lat: 0, lng: 0 };
+
+  // Arreglo de marcadores
+  markers: any[] = [];
 
   constructor(private bluetoothService: BluetoothService) {}
 
   ngOnInit() {
-    // Obtener coordenadas del robot
     this.getRobotLocation();
-
-    // Obtener coordenadas del usuario
     this.getUserLocation();
   }
 
-  // Obtener las coordenadas del robot desde Bluetooth
+  // Obtener ubicación del robot por Bluetooth
   async getRobotLocation() {
     const robotCoords = await this.bluetoothService.readGpsCoordinates();
     if (robotCoords) {
       this.robotLocation = robotCoords;
-      this.updateMap();
+      this.addOrUpdateMarker('robot', robotCoords);
     }
   }
 
-  // Obtener las coordenadas del usuario
-  getUserLocation() {
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          this.userLocation = { lat, lng };
-          this.center = this.userLocation; // Actualiza el mapa con la ubicación del usuario
-        },
-        (error) => {
-          console.error('Error obteniendo ubicación del usuario:', error);
-        }
-      );
-    } else {
-      console.error('Geolocalización no soportada');
+  // Obtener ubicación del usuario
+  async getUserLocation() {
+    try {
+      const position = await Geolocation.getCurrentPosition();
+      this.userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      this.addOrUpdateMarker('usuario', this.userLocation);
+    } catch (error) {
+      console.error('Error al obtener la ubicación del usuario:', error);
     }
   }
 
-  // Actualizar el mapa con las ubicaciones
-  updateMap() {
-    this.center = this.robotLocation; // Actualiza el centro del mapa con la ubicación del robot
-    // Aquí también puedes actualizar la posición de un marcador para el robot y otro para el usuario
+  // Mostrar ubicación del usuario al presionar el botón
+  async mostrarUbicacion() {
+    
+    await this.getUserLocation();
+    this.center = this.userLocation;
   }
 
-  // Cuando se presiona "Volver", el robot se mueve hacia el usuario
+  // Enviar ubicación al robot por Bluetooth
   volverAlUsuario() {
     const lat = this.userLocation.lat;
     const lng = this.userLocation.lng;
     const coordenadas = `${lat},${lng}`;
+    this.bluetoothService.sendData(coordenadas);
+  }
 
-    this.bluetoothService.sendData(coordenadas); // Enviar las coordenadas del usuario al robot
+  // Añadir o actualizar marcador
+  addOrUpdateMarker(tipo: 'robot' | 'usuario', position: google.maps.LatLngLiteral) {
+    const existingIndex = this.markers.findIndex(m => m.tipo === tipo);
+    const markerData = {
+      tipo,
+      position,
+      label: tipo === 'robot' ? '🤖' : '📍'
+    };
+
+    if (existingIndex >= 0) {
+      this.markers[existingIndex] = markerData;
+    } else {
+      this.markers.push(markerData);
+    }
   }
 }
-

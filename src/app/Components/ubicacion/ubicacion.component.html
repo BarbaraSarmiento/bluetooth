@@ -1,13 +1,20 @@
-<!--src/app/Components/ubicacion/ubicacion.component.html-->
-<!-- Botón para volver -->
-<button (click)="volverAlUsuario()" class="btn-volver">Volver</button>
+<!-- Botones -->
+<button (click)="mostrarUbicacion()">¿Dónde estoy?</button>
+<button (click)="volverAlUsuario()">Volver</button>
 
+<!-- Mapa -->
 <div class="map-wrapper">
-    <google-map
-      [center]="center"
-      [zoom]="zoom"
-      [height]="'100%'"
-      [width]="'100%'">
-</google-map>
-  </div>
-  
+  <google-map
+    [center]="center"
+    [zoom]="zoom"
+    [height]="'100%'"
+    [width]="'100%'">
+    
+    <!-- Marcadores dinámicos -->
+    <map-marker
+      *ngFor="let marker of markers"
+      [position]="marker.position"
+      [label]="marker.label">
+    </map-marker>
+  </google-map>
+</div>
