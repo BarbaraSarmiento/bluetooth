@@ -7,7 +7,7 @@ import { UbicacionComponent } from '../ubicacion/ubicacion.component';
 import { RouterOutlet } from '@angular/router';
 @Component({
   selector: 'app-home',
-  imports: [NgFor,NgForOf,BluetoothComponent, UbicacionComponent,RouterOutlet, ],
+  imports: [NgFor,NgForOf,BluetoothComponent, UbicacionComponent,RouterOutlet,],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })

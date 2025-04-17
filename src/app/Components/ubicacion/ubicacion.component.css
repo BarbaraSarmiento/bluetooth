@@ -1,0 +1,17 @@
+:host {
+    display: block;
+    height: 100vh; /* Ocupa toda la altura de la pantalla */
+  }
+  
+  .map-wrapper {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  google-map {
+    display: block;
+    height: 100%;
+    width: 100%;
+  }
+  

@@ -1,3 +1,4 @@
+//src/app/Components/navbar/navbar.component.ts
 import { Component, OnInit } from '@angular/core';
 import { BluetoothService } from '../bluetooth.service';
 import { NgFor, NgForOf } from '@angular/common';

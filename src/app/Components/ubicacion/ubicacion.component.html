@@ -1,1 +1,13 @@
-<p>ubicacion works!</p>
+<!--src/app/Components/ubicacion/ubicacion.component.html-->
+<!-- Botón para volver -->
+<button (click)="volverAlUsuario()" class="btn-volver">Volver</button>
+
+<div class="map-wrapper">
+    <google-map
+      [center]="center"
+      [zoom]="zoom"
+      [height]="'100%'"
+      [width]="'100%'">
+</google-map>
+  </div>
+  

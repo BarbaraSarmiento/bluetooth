@@ -11,6 +11,7 @@ export class BluetoothService {
   private deviceId: string | null = null;
   private readonly SERVICE_UUID = "0000181c-0000-1000-8000-00805f9b34fb";
   private readonly CHARACTERISTIC_UUID = "00002a56-0000-1000-8000-00805f9b34fb";
+  private readonly GPS_CHARACTERISTIC_UUID = "your-gps-characteristic-uuid"; // Cambia esto por la UUID de las coordenadas GPS de tu dispositivo
 
   logMessages = new BehaviorSubject<string[]>([]); // Para almacenar logs
 
@@ -52,7 +53,20 @@ export class BluetoothService {
       this.addLog('No hay dispositivo conectado');
       return;
     }
+    try {
+      const encodedValue = btoa(value); // Codificar a base64
+      await BluetoothLe.write({
+        deviceId: this.deviceId,
+        service: this.SERVICE_UUID,
+        characteristic: this.CHARACTERISTIC_UUID,
+        value: encodedValue
+      });
+      this.addLog(`Datos enviados: ${value}`);
+    } catch (error) {
+      this.addLog('Error al enviar datos: ' + error);
+    }
   }
+
   // Leer datos de la característica Bluetooth (como el peso)
   async readWeight() {
     if (!this.deviceId) {
@@ -103,7 +117,6 @@ export class BluetoothService {
     }
   }
   
-  
   // Desconectar del dispositivo Bluetooth
   async disconnect() {
     if (!this.deviceId) {
@@ -119,4 +132,50 @@ export class BluetoothService {
       this.addLog('Error al desconectar: ' + error);
     }
   }
+
+  // Método para leer las coordenadas del GPS del robot
+  async readGpsCoordinates() {
+    if (!this.deviceId) {
+      this.addLog('No hay dispositivo conectado');
+      return null;
+    }
+  
+    try {
+      const result = await BluetoothLe.read({
+        deviceId: this.deviceId,
+        service: this.SERVICE_UUID,
+        characteristic: this.GPS_CHARACTERISTIC_UUID, // Aquí debes tener la UUID para las coordenadas GPS
+      });
+  
+      if (!result.value) {
+        this.addLog('No se pudo leer las coordenadas GPS.');
+        return null;
+      }
+  
+      let decodedValue: string;
+  
+      // Verificamos si result.value es un DataView
+      if (result.value instanceof DataView) {
+        // Convertimos el DataView a un Uint8Array
+        const byteArray = new Uint8Array(result.value.buffer);
+        // Convertimos el Uint8Array a una cadena Base64
+        decodedValue = btoa(String.fromCharCode(...byteArray));
+      } else {
+        // Si result.value ya es un string Base64
+        decodedValue = result.value;
+      }
+  
+      // Decodificamos las coordenadas (asumiendo que están en el formato 'lat,lng')
+      const coords = atob(decodedValue).split(','); // Decodificamos de Base64 a cadena y separamos las coordenadas
+      const lat = parseFloat(coords[0]);
+      const lng = parseFloat(coords[1]);
+  
+      this.addLog(`Coordenadas GPS leídas: ${lat}, ${lng}`);
+      return { lat, lng };
+    } catch (error) {
+      this.addLog('Error al leer las coordenadas GPS: ' + error);
+      return null;
+    }
+  }
+  
 }
