@@ -5,7 +5,7 @@ import { NgFor, NgForOf, NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-bluetooth',
-  imports: [NgFor,NgIf,],
+  imports: [NgIf,],
   templateUrl: './bluetooth.component.html',
   styleUrl: './bluetooth.component.css'
 })

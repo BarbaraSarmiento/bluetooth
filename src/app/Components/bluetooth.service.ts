@@ -11,7 +11,7 @@ export class BluetoothService {
   private deviceId: string | null = null;
   private readonly SERVICE_UUID = "0000181c-0000-1000-8000-00805f9b34fb";
   private readonly CHARACTERISTIC_UUID = "00002a56-0000-1000-8000-00805f9b34fb";
-  private readonly GPS_CHARACTERISTIC_UUID = "your-gps-characteristic-uuid"; // Cambia esto por la UUID de las coordenadas GPS de tu dispositivo
+  private readonly GPS_CHARACTERISTIC_UUID = "b90f9037-f834-47e1-8037-8908de9ff07f"; // Cambia esto por la UUID de las coordenadas GPS de tu dispositivo
 
   logMessages = new BehaviorSubject<string[]>([]); // Para almacenar logs
 
@@ -133,6 +133,12 @@ export class BluetoothService {
     }
   }
 
+  // Método para leer los datos desde el ESP32
+ // Método para leer los datos desde el ESP32
+
+
+  
+
   // Método para leer las coordenadas del GPS del robot
   async readGpsCoordinates() {
     if (!this.deviceId) {
@@ -178,4 +184,5 @@ export class BluetoothService {
     }
   }
   
+
 }
