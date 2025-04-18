@@ -1,3 +1,4 @@
+// src/app/Components/ubicacion/ubicacion.component.ts
 import { Geolocation } from '@capacitor/geolocation';
 import { Component } from '@angular/core';
 import { GoogleMapsModule } from '@angular/google-maps';
@@ -19,6 +20,7 @@ export class UbicacionComponent {
   // Posiciones
   robotLocation: google.maps.LatLngLiteral = { lat: 0, lng: 0 };
   userLocation: google.maps.LatLngLiteral = { lat: 0, lng: 0 };
+  intervaloRobot: any = null;
 
   // Arreglo de marcadores
   markers: any[] = [];
@@ -55,17 +57,32 @@ export class UbicacionComponent {
 
   // Mostrar ubicación del usuario al presionar el botón
   async mostrarUbicacion() {
-    
     await this.getUserLocation();
     this.center = this.userLocation;
   }
 
+  async mostrarUbicacionRobot() {
+    await this.getRobotLocation();
+    this.center = this.robotLocation;
+  }
+
   // Enviar ubicación al robot por Bluetooth
   volverAlUsuario() {
-    const lat = this.userLocation.lat;
-    const lng = this.userLocation.lng;
-    const coordenadas = `${lat},${lng}`;
-    this.bluetoothService.sendData(coordenadas);
+    if (this.intervaloRobot) clearInterval(this.intervaloRobot);
+
+    this.intervaloRobot = setInterval(async () => {
+      await this.getRobotLocation();
+      this.center = this.robotLocation;
+
+      const distancia = this.calcularDistancia(
+        this.robotLocation.lat, this.robotLocation.lng,
+        this.userLocation.lat, this.userLocation.lng
+      );
+
+      if (distancia < 5) { // Si ya está a 5 metros
+        clearInterval(this.intervaloRobot);
+      }
+    }, 2000); // Cada 2 segundos actualiza
   }
 
   // Añadir o actualizar marcador
@@ -82,5 +99,18 @@ export class UbicacionComponent {
     } else {
       this.markers.push(markerData);
     }
+  }
+
+  // Calcular distancia entre dos coordenadas
+  calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371000; // radio de la Tierra en metros
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Resultado en metros
   }
 }

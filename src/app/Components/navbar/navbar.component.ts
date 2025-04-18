@@ -8,7 +8,7 @@ import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
-  imports: [NgFor,NgForOf,BluetoothComponent, UbicacionComponent,RouterOutlet, ],  templateUrl: './navbar.component.html',
+  imports: [RouterOutlet, ],  templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent  implements OnInit {
