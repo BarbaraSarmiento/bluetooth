@@ -13,6 +13,8 @@ import { CommonModule } from '@angular/common'; // 👈 esto es clave
   styleUrls: ['./ubicacion.component.css']
 })
 export class UbicacionComponent {
+  constructor(private bluetoothService: BluetoothService) {}
+
   // Centro del mapa
   center: google.maps.LatLngLiteral = { lat: -2.9001285, lng: -79.0058965 };
   zoom = 12;
@@ -23,9 +25,6 @@ export class UbicacionComponent {
 
   // Arreglo de marcadores
   markers: any[] = [];
-
-  constructor(private bluetoothService: BluetoothService) {}
-
   ngOnInit() {
     this.getRobotLocation();
     this.getUserLocation();

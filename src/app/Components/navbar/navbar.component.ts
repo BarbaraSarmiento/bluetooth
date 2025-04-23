@@ -1,9 +1,6 @@
 //src/app/Components/navbar/navbar.component.ts
 import { Component, OnInit } from '@angular/core';
 import { BluetoothService } from '../bluetooth.service';
-import { NgFor, NgForOf } from '@angular/common';
-import { BluetoothComponent } from '../bluetooth/bluetooth.component';
-import { UbicacionComponent } from '../ubicacion/ubicacion.component';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
@@ -12,6 +9,11 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent  implements OnInit {
+  
+  constructor() {}
+
+
+
   logs: string[] = [];
   isMenuActive = false;
 
@@ -20,14 +22,11 @@ export class NavbarComponent  implements OnInit {
     console.log(this.isMenuActive);
   }
   ngOnInit() {
-    this.bluetoothService.logMessages.subscribe(logs => {
+    /*this.bluetoothService.logMessages.subscribe(logs => {
       this.logs = logs;
-    });
+    });*/
   }
   connect() {
-    this.bluetoothService.connectToDevice();
-  }
-  constructor(private bluetoothService: BluetoothService) {
-    
+   // this.bluetoothService.connectToDevice();
   }
 }

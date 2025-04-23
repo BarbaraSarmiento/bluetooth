@@ -20,24 +20,27 @@ export class BluetoothService {
   }
 
   async connectToDevice(name = 'CHUAS-BOT') {
-    try {
-      type BluetoothDevice = { id: string; name: string };
-  
-      const devices: BluetoothDevice[] = await this.bluetoothSerial.list();
-      const device = devices.find(d => d.name === name);
-  
-      if (!device) {
-        this.addLog(`No se encontró el dispositivo ${name}`);
-        return;
-      }
-  
-      await this.bluetoothSerial.connect(device.id).toPromise();
-      this.connectedDeviceAddress = device.id;
-      this.addLog(`Conectado a ${name}`);
-    } catch (error) {
-      this.addLog('Error al conectar: ' + error);
+  try {
+    console.log('Intentando conectar...');
+    type BluetoothDevice = { id: string; name: string };
+    const devices: BluetoothDevice[] = await this.bluetoothSerial.list();
+    console.log('Dispositivos encontrados:', devices);
+
+    const device = devices.find(d => d.name === name);
+    if (!device) {
+      this.addLog(`No se encontró el dispositivo ${name}`);
+      return;
     }
+
+    await this.bluetoothSerial.connect(device.id).toPromise();
+    this.connectedDeviceAddress = device.id;
+    this.addLog(`Conectado a ${name}`);
+  } catch (error) {
+    this.addLog('Error al conectar: ' + error);
+    console.error(error); // Esto ayudará a ver si hay algún error específico
   }
+}
+
   
 
   listenForGpsCoordinates(callback: (lat: number, lng: number) => void) {

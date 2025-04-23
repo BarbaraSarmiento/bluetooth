@@ -12,6 +12,8 @@ import { RouterOutlet } from '@angular/router';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
+
+  constructor(private bluetoothService: BluetoothService) {}
   logs: string[] = [];
   isMenuActive = false;
 
@@ -27,7 +29,5 @@ export class HomeComponent implements OnInit {
   connect() {
     this.bluetoothService.connectToDevice();
   }
-  constructor(private bluetoothService: BluetoothService) {
-    
-  }
+  
 }
