@@ -25,7 +25,7 @@ export class HomeComponent implements OnInit {
     });
   }
   connect() {
-    this.bluetoothService.scanAndConnect();
+    this.bluetoothService.connectToDevice();
   }
   constructor(private bluetoothService: BluetoothService) {
     
