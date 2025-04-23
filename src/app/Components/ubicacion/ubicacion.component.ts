@@ -78,7 +78,7 @@ export class UbicacionComponent {
     const lat = this.userLocation.lat;
     const lng = this.userLocation.lng;
     const coordenadas = `${lat},${lng}`;
-    this.bluetoothService.sendData(coordenadas);
+    this.bluetoothService.connectToDevice(coordenadas);
   }
 
   // Añadir o actualizar marcador
