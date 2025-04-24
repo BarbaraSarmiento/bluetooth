@@ -1,29 +1,28 @@
-//src/app/Components/bluetooth/bluetooth.component.ts (PESO)
 import { Component, OnInit } from '@angular/core';
 import { BluetoothService } from '../bluetooth.service';
-import { NgFor, NgForOf, NgIf } from '@angular/common';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-bluetooth',
-  imports: [NgIf,],
+  standalone: true,
+  imports: [NgIf],
   templateUrl: './bluetooth.component.html',
   styleUrl: './bluetooth.component.css'
 })
-export class BluetoothComponent {
+export class BluetoothComponent implements OnInit {
 
   weight: number | null = null;
-
-  constructor(private bluetoothService: BluetoothService) {}
-  
-  async connectDevice() {
-    await this.bluetoothService.connectToDevice();
-    console.log('Dispositivo conectado');
-    this.getWeight();
-  }
-
   intervalId: any;
 
-  getWeight() {
+  constructor(private bluetoothService: BluetoothService) {}
+
+  async ngOnInit() {
+    await this.bluetoothService.connectToDevice();
+    console.log('Dispositivo conectado automáticamente');
+    this.startReadingWeight();
+  }
+
+  startReadingWeight() {
     this.intervalId = setInterval(async () => {
       const weight = await this.bluetoothService.readWeight?.();
       if (weight !== null && weight !== undefined) {
@@ -31,10 +30,6 @@ export class BluetoothComponent {
       }
     }, 1000);
   }
-  
-  disconnectDevice() {
-    clearInterval(this.intervalId);
-    this.bluetoothService.disconnect();
-  }
+
+  // No necesitamos desconexión manual
 }
-  
