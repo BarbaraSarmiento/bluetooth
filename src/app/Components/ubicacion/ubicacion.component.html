@@ -1,9 +1,9 @@
-<!-- src/app/Components/ubicacion/ubicacion.component.html -->
-<button (click)="mostrarUbicacion()">Ubicacion Usuario</button>
-<button (click)="volverAlUsuario()">Volver</button>
-<button (click)="mostrarUbicacionRobot()">Robot</button>
+<div class="controls">
+  <button (click)="mostrarUbicacionUsuario()">📍 Ubicación Usuario</button>
+  <button (click)="mostrarUbicacionRobot()">🤖 Ubicación Robot</button>
+  <button (click)="enviarUbicacionAlRobot()">🔄 Enviar Ubicación al Robot</button>
+</div>
 
-<!-- Mapa -->
 <div class="map-wrapper">
   <google-map
     [center]="center"

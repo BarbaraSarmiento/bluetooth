@@ -1,9 +1,14 @@
-//src/app/Components/ubicacion/ubicacion.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Geolocation } from '@capacitor/geolocation';
-import { Component } from '@angular/core';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { BluetoothService } from '../bluetooth.service';
-import { CommonModule } from '@angular/common'; // 👈 esto es clave
+import { CommonModule } from '@angular/common';
+
+interface Marker {
+  tipo: 'robot' | 'usuario';
+  position: google.maps.LatLngLiteral;
+  label: string;
+}
 
 @Component({
   selector: 'app-ubicacion',
@@ -12,90 +17,128 @@ import { CommonModule } from '@angular/common'; // 👈 esto es clave
   templateUrl: './ubicacion.component.html',
   styleUrls: ['./ubicacion.component.css']
 })
-export class UbicacionComponent {
+export class UbicacionComponent implements OnInit, OnDestroy {
   constructor(private bluetoothService: BluetoothService) {}
 
-  // Centro del mapa
+  // Centro inicial del mapa (fallback)
   center: google.maps.LatLngLiteral = { lat: -2.9001285, lng: -79.0058965 };
   zoom = 12;
 
-  // Posiciones
-  robotLocation: google.maps.LatLngLiteral = { lat: 0, lng: 0 };
-  userLocation: google.maps.LatLngLiteral = { lat: 0, lng: 0 };
+  // Posiciones (null mientras no se obtienen)
+  robotLocation: google.maps.LatLngLiteral | null = null;
+  userLocation: google.maps.LatLngLiteral | null = null;
 
-  // Arreglo de marcadores
-  markers: any[] = [];
+  // Marcadores
+  markers: Marker[] = [];
+
+  // Control de suscripción para robot GPS
+  private robotSubscription: any;
+
   ngOnInit() {
-    this.getRobotLocation();
-    this.getUserLocation();
+    this.solicitarPermisosUbicacion();
+    this.iniciarEscuchaRobot();
+    this.obtenerUbicacionUsuario();
   }
 
-  // Obtener ubicación del robot por Bluetooth
-  async getRobotLocation() {
-    const robotCoords = await this.bluetoothService.readGpsCoordinates();
-    console.log('📡 Coordenadas del robot recibidas:', robotCoords); // Agrega este log
-    if (robotCoords && robotCoords.lat !== 0 && robotCoords.lng !== 0) {
-      this.robotLocation = robotCoords;
-      this.addOrUpdateMarker('robot', robotCoords);
-    } else {
-      console.warn('⚠️ Coordenadas del robot inválidas:', robotCoords);
+  ngOnDestroy() {
+    // Limpiar suscripción al salir del componente
+    if (this.robotSubscription) {
+      this.robotSubscription.unsubscribe();
     }
   }
-  
 
-  // Obtener ubicación del usuario
-  async getUserLocation() {
+  // Solicitar permisos de ubicación
+  private async solicitarPermisosUbicacion() {
     try {
-      const position = await Geolocation.getCurrentPosition();
-      this.userLocation = {
+      const result = await Geolocation.requestPermissions();
+      console.log('✅ Permisos de ubicación:', result);
+    } catch (error) {
+      console.error('❌ Error al solicitar permisos:', error);
+    }
+  }
+
+  // Escuchar ubicación del robot vía Bluetooth (suscripción única)
+  private iniciarEscuchaRobot() {
+    this.robotSubscription = this.bluetoothService.listenForGpsCoordinates((lat, lng) => {
+      const coords = { lat, lng };
+      console.log('📡 Coordenadas del robot:', coords);
+      this.robotLocation = coords;
+      this.addOrUpdateMarker('robot', coords);
+    });
+  }
+
+  // Obtener ubicación actual del usuario
+  private async obtenerUbicacionUsuario() {
+    try {
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true
+      });
+
+      const coords = {
         lat: position.coords.latitude,
         lng: position.coords.longitude
       };
-      this.addOrUpdateMarker('usuario', this.userLocation);
+
+      console.log('📍 Ubicación del usuario:', coords);
+      this.userLocation = coords;
+      this.addOrUpdateMarker('usuario', coords);
     } catch (error) {
-      console.error('Error al obtener la ubicación del usuario:', error);
+      console.error('❌ Error al obtener la ubicación del usuario:', error);
     }
   }
 
-  // Mostrar ubicación del usuario al presionar el botón
-  async mostrarUbicacion() {
-    
-    await this.getUserLocation();
-    this.center = this.userLocation;
+  // Mostrar ubicación del usuario y centrar mapa
+  async mostrarUbicacionUsuario() {
+    await this.obtenerUbicacionUsuario();
+    if (this.userLocation) {
+      this.center = this.userLocation;
+      this.zoom = 16;
+    }
   }
-  async mostrarUbicacionRobot() {
-    await this.getRobotLocation();
-    if (this.robotLocation.lat !== 0 && this.robotLocation.lng !== 0) {
+
+  // Mostrar ubicación del robot y centrar mapa
+  mostrarUbicacionRobot() {
+    if (this.robotLocation) {
       this.center = this.robotLocation;
+      this.zoom = 16;
     } else {
-      alert("Ubicación del robot no disponible aún.");
+      alert('⚠️ Ubicación del robot no disponible aún.');
     }
   }
-  
-  // Enviar ubicación al robot por Bluetooth
-  volverAlUsuario() {
-    const lat = this.userLocation.lat;
-    const lng = this.userLocation.lng;
+
+  // Enviar ubicación del usuario al robot
+  enviarUbicacionAlRobot() {
+    if (!this.userLocation) {
+      alert('⚠️ Ubicación del usuario no disponible.');
+      return;
+    }
+
+    const { lat, lng } = this.userLocation;
     const coordenadas = `${lat},${lng}`;
-    this.bluetoothService.connectToDevice(coordenadas);
+    this.bluetoothService.sendData(coordenadas);
+    console.log('📤 Coordenadas enviadas al robot:', coordenadas);
   }
 
-  // Añadir o actualizar marcador
-  addOrUpdateMarker(tipo: 'robot' | 'usuario', position: google.maps.LatLngLiteral) {
+  // Añadir o actualizar marcador según tipo
+  private addOrUpdateMarker(tipo: 'robot' | 'usuario', position: google.maps.LatLngLiteral) {
     const existingIndex = this.markers.findIndex(m => m.tipo === tipo);
-    const markerData = {
+    const markerData: Marker = {
       tipo,
       position,
       label: tipo === 'robot' ? '🤖' : '📍'
     };
 
     if (existingIndex >= 0) {
-      this.markers[existingIndex] = markerData;
+      const existingMarker = this.markers[existingIndex];
+      // Solo actualiza si la posición cambió
+      if (
+        existingMarker.position.lat !== position.lat ||
+        existingMarker.position.lng !== position.lng
+      ) {
+        this.markers[existingIndex] = markerData;
+      }
     } else {
       this.markers.push(markerData);
     }
   }
-  
-  
-  
 }
