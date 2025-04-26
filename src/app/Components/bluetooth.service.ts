@@ -55,32 +55,31 @@ export class BluetoothService {
     this._alerts.next(alerts.slice(-5));
   }
 
-  async checkPermissions(): Promise<boolean> {
-    if (!this.platform.is('android')) return true;
+  //async checkPermissions(): Promise<boolean> {
+    //if (!this.platform.is('android')) return true;
     
-    return new Promise((resolve) => {
-      bluetoothSerial.hasPermission(
-        (hasPermission: boolean) => {
-          if (hasPermission) {
-            resolve(true);
-          } else {
-            bluetoothSerial.requestPermission(
-              (granted: boolean) => resolve(granted),
-              () => resolve(false)
-            );
-          }
-        },
-        () => resolve(false)
-      );
-    });
-  }
+    //return new Promise((resolve) => {
+      //bluetoothSerial.hasPermission(
+        //(hasPermission: boolean) => {
+          //if (hasPermission) {
+            //resolve(true);
+          //} else {
+            //bluetoothSerial.requestPermission(
+              //(granted: boolean) => resolve(granted),
+              //() => resolve(false)
+            //);
+          //}
+        //},
+        //() => resolve(false)
+      //);
+    //});
+  
 
   async connectToDevice(deviceName = 'CHUAS-BOT'): Promise<boolean> {
     try {
-      const hasPermissions = await this.checkPermissions();
-      if (!hasPermissions) {
-        throw new Error('Permisos de Bluetooth no concedidos');
-      }
+      // No verificamos permisos en esta versión simplificada
+    this.addLog('Saltando verificación de permisos Bluetooth');
+
 
       this._connectionStatus.next('connecting');
       this.addLog(`Conectando a ${deviceName}...`);
