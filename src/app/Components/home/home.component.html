@@ -1,10 +1,45 @@
-<button (click)="connect()">Conectar</button>
-<p>Estado: {{ connectionStatus }}</p>
+<div class="home-page">
+  <header class="page-header">
+    <h1>Robot CHUAS</h1>
+    <button (click)="toggleMenu()" class="menu-button">☰</button>
+  </header>
 
-<!-- Añade esto para ver logs -->
-<div *ngIf="logs.length > 0" class="log-container">
-  <h3>Registro de eventos:</h3>
-  <div *ngFor="let log of logs" class="log-entry">
-    {{ log }}
-  </div>
+  <main class="main-content">
+    <h2>Control del Robot</h2>
+    
+    <div class="card">
+      <h3>Estado de Conexión</h3>
+      
+      <p>Estado actual: <strong>{{ connectionStatus }}</strong></p>
+      
+      <button (click)="connect()" class="primary-button">
+        Conectar al Robot
+      </button>
+    </div>
+    
+    <div class="card quick-actions">
+      <h3>Operaciones Rápidas</h3>
+      
+      <a routerLink="/bluetooth" class="action-link">
+        Control Bluetooth
+      </a>
+      
+      <a routerLink="/ubicacion" class="action-link">
+        Ubicación
+      </a>
+    </div>
+  </main>
+
+  <nav class="side-menu" [class.active]="isMenuActive">
+    <div class="menu-header">
+      <h3>Menú</h3>
+      <button (click)="toggleMenu()" class="close-menu">×</button>
+    </div>
+    
+    <ul class="menu-list">
+      <li><a routerLink="/home" (click)="toggleMenu()">Inicio</a></li>
+      <li><a routerLink="/bluetooth" (click)="toggleMenu()">Control Bluetooth</a></li>
+      <li><a routerLink="/ubicacion" (click)="toggleMenu()">Ubicación</a></li>
+    </ul>
+  </nav>
 </div>

@@ -39,10 +39,11 @@
     </application>
 
     <!-- Permissions -->
-<uses-permission android:name="android.permission.BLUETOOTH" />
-<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.BLUETOOTH"/>
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 <uses-permission android:name="android.permission.INTERNET" />
 <!-- Suggested code may be subject to a license. Learn more: ~LicenseLog:170456040. -->
 <!-- Suggested code may be subject to a license. Learn more: ~LicenseLog:2039822998. -->

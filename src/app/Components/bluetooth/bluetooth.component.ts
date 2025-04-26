@@ -1,143 +1,86 @@
-//src/app/Components/bluetooth/bluetooth.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { BluetoothService } from '../bluetooth.service';
-import { NgClass } from '@angular/common';
-import { NgIf,NgFor } from '@angular/common';
-
+import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-bluetooth',
   standalone: true,
-  imports: [NgIf,NgFor,NgClass,],
+  imports: [CommonModule],
   templateUrl: './bluetooth.component.html',
-  styleUrl: './bluetooth.component.css'
+  styleUrls: ['./bluetooth.component.css']
 })
-export class BluetoothComponent implements OnInit, OnDestroy {
-  
-  weight: number | null = null;
-  intervalId: any;
-  isConnected = false;
-  errorMessage: string | null = null;
-  isLoading = true;
-  connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error' = 'disconnected';
-  isDevicePaired = false;
+export class BluetoothComponent implements OnDestroy {
+  private subs: Subscription[] = [];
+  currentConnectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error' = 'disconnected';
+  currentWeight: number = 0;
+  weightStatus: string = 'Desconocido';
   pairedDevices: any[] = [];
+  alerts: string[] = [];
 
-  constructor(private bluetoothService: BluetoothService) {}
-
-  async ngOnInit() {
-    await this.checkPairedDevices();
-    await this.connectDevice();
-    this.startReadingWeight();
-    this.isLoading = false;
+  constructor(public bluetoothService: BluetoothService) {
+    this.subs.push(
+      this.bluetoothService.connectionStatus$.subscribe(status => {
+        this.currentConnectionStatus = status;
+      }),
+      this.bluetoothService.weight$.subscribe(weight => {
+        this.currentWeight = weight;
+      }),
+      this.bluetoothService.weightStatus$.subscribe(status => {
+        this.weightStatus = status;
+      }),
+      this.bluetoothService.pairedDevices$.subscribe(devices => {
+        this.pairedDevices = devices;
+      }),
+      this.bluetoothService.alerts$.subscribe(alerts => {
+        this.alerts = alerts;
+      })
+    );
   }
 
   ngOnDestroy() {
-    this.cleanUp();
+    this.subs.forEach(sub => sub.unsubscribe());
   }
 
-  private async checkPairedDevices() {
-    try {
-      // Verificar dispositivos emparejados
-      const devices = await this.bluetoothService.listPairedDevices();
-      this.pairedDevices = devices;
-      this.isDevicePaired = devices.some(device => device.name === 'CHUAS-BOT');
-      
-      if (!this.isDevicePaired) {
-        this.errorMessage = 'El dispositivo CHUAS-BOT no está emparejado con este teléfono.';
-      }
-    } catch (error) {
-      console.error('Error al verificar dispositivos emparejados:', error);
+  // Método para obtener texto del estado
+  getStatusText(): string {
+    switch(this.currentConnectionStatus) {
+      case 'disconnected': return 'Desconectado';
+      case 'connecting': return 'Conectando...';
+      case 'connected': return 'Conectado';
+      case 'error': return 'Error';
+      default: return this.currentConnectionStatus;
     }
   }
 
-  private async connectDevice() {
-    if (!this.isDevicePaired) {
-      this.connectionStatus = 'error';
-      return;
-    }
-
-    this.connectionStatus = 'connecting';
-    this.errorMessage = null;
-    
-
-      
-      try {
-        // Timeout de 10 segundos para la conexión
-        const success = await Promise.race<boolean>([
-          this.bluetoothService.connectToDevice(),
-          new Promise<boolean>((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout: La conexión tardó demasiado')), 10000)
-          )
-        ]);
-        
-        if (success) {
-          this.connectionStatus = 'connected';
-          this.isConnected = true;
-        } else {
-          throw new Error('No se pudo conectar al dispositivo');
-        }
-      } catch (error) {
-        this.connectionStatus = 'error';
-        this.isConnected = false;
-        this.errorMessage = error instanceof Error ? error.message : 'Error al conectar con el dispositivo';
-        console.error('Error en connectDevice:', error);
-      }
-    }
-
-  async retryConnection() {
-    this.isLoading = true;
-    await this.connectDevice();
-    
-    if (this.isConnected) {
-      this.startReadingWeight();
-    }
-    
-    this.isLoading = false;
-  }
-
-  private startReadingWeight() {
-    // Limpiar intervalo previo si existe
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-    }
-
-    this.intervalId = setInterval(async () => {
-      if (this.isConnected) {
-        try {
-          const weight = await this.bluetoothService.readWeight();
-          if (weight !== null && weight !== undefined) {
-            this.weight = weight;
-            this.errorMessage = null;
-          }
-        } catch (error) {
-          this.handleReadingError(error);
-        }
-      }
-    }, 1000);
-  }
-
-  private handleReadingError(error: any) {
-    console.error('Error al leer peso:', error);
-    this.errorMessage = 'Error al leer datos del dispositivo';
-    this.isConnected = false;
-    this.connectionStatus = 'error';
-  }
-
-  private cleanUp() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
+  // Método para obtener clase CSS según estado
+  getStatusClass(): string {
+    switch(this.currentConnectionStatus) {
+      case 'connected': return 'connected';
+      case 'disconnected': return 'disconnected';
+      case 'connecting': return 'connecting';
+      case 'error': return 'error';
+      default: return '';
     }
   }
 
-  getStatusText(status: string): string {
-    const statusMap: {[key: string]: string} = {
-      'disconnected': 'Desconectado',
-      'connecting': 'Conectando...',
-      'connected': 'Conectado',
-      'error': 'Error de conexión'
-    };
-    return statusMap[status] || status;
+  // Método para obtener clase CSS según estado del peso
+  getWeightStatusClass(): string {
+    if (this.weightStatus.includes('medio vacío')) return 'medium';
+    if (this.weightStatus.includes('casi lleno')) return 'almost-full';
+    if (this.weightStatus.includes('lleno')) return 'full';
+    return 'unknown';
   }
 
+  toggleConnection() {
+    if (this.currentConnectionStatus === 'connected') {
+      this.bluetoothService.disconnect();
+    } else {
+      this.bluetoothService.connectToDevice();
+    }
+  }
+
+  requestWeight() {
+    this.bluetoothService.requestWeight();
+  }
 }

@@ -1,42 +1,51 @@
-<!-- src/app/Components/bluetooth/bluetooth.component.html -->
 <div class="bluetooth-container">
-  <div *ngIf="isLoading" class="loading">
-    <p>Cargando...</p>
-  </div>
-
-  <div *ngIf="!isLoading">
-    <div *ngIf="errorMessage" class="error-message">
-      {{ errorMessage }}
-    </div>
-
-    <div class="connection-status">
-      Estado: 
-      <span [ngClass]="{
-        'status-connected': connectionStatus === 'connected',
-        'status-connecting': connectionStatus === 'connecting',
-        'status-error': connectionStatus === 'error'
-      }">
-        {{ getStatusText(connectionStatus) }}
+  <div class="card">
+    <h2>Conexión Bluetooth</h2>
+    
+    <div class="status-container">
+      <span class="status-label">Estado:</span>
+      <span class="status-badge" [ngClass]="getStatusClass()">
+        {{ getStatusText() }}
       </span>
     </div>
+    
+    <button (click)="toggleConnection()" class="action-button">
+      {{ currentConnectionStatus === 'connected' ? 'Desconectar' : 'Conectar' }}
+    </button>
+  </div>
 
-    <div *ngIf="weight !== null" class="weight-display">
-      Peso actual: <strong>{{ weight }} kg</strong>
-    </div>
-
-    <div class="actions">
-      <button (click)="retryConnection()" [disabled]="connectionStatus === 'connecting'">
-        {{ connectionStatus === 'connecting' ? 'Conectando...' : 'Reintentar conexión' }}
+  <div class="card">
+    <h2>Sensor de Peso</h2>
+    
+    <div class="weight-container">
+      <div class="weight-value">
+        <span class="weight-label">Peso Actual:</span>
+        <span class="weight-number">{{ currentWeight.toFixed(3) }} kg</span>
+      </div>
+      
+      <div class="weight-status" [ngClass]="getWeightStatusClass()">
+        {{ weightStatus }}
+      </div>
+      
+      <button (click)="requestWeight()" class="action-button">
+        Actualizar Peso
       </button>
     </div>
+  </div>
 
-    <div *ngIf="pairedDevices.length > 0" class="paired-devices">
-      <h3>Dispositivos emparejados:</h3>
-      <ul>
-        <li *ngFor="let device of pairedDevices">
-          {{ device.name }} ({{ device.address }})
-        </li>
-      </ul>
+  <div class="card">
+    <h2>Alertas</h2>
+    
+    <div class="alerts-container">
+      @if (alerts.length > 0) {
+        <ul class="alerts-list">
+          @for (alert of alerts; track $index) {
+            <li>{{ alert }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="no-alerts">No hay alertas recientes</p>
+      }
     </div>
   </div>
 </div>

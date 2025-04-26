@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject,Subject } from 'rxjs';
 import { Platform } from '@ionic/angular';
 
 declare var bluetoothSerial: any;
@@ -9,7 +9,9 @@ declare var bluetoothSerial: any;
 })
 export class BluetoothService {
   private connectedDeviceAddress: string | null = null;
-  logMessages = new BehaviorSubject<string[]>([]);
+  private logMessages = new BehaviorSubject<string[]>([]);
+  public weightSubject = new Subject<number>(); // Nuevo Subject para pesos
+  public logs$ = this.logMessages.asObservable();
 
   constructor(private platform: Platform) {
     this.platform.ready().then(() => {
@@ -35,6 +37,24 @@ export class BluetoothService {
           reject(error);
         }
       );
+    });
+  }
+  private setupBluetoothListeners(): void {
+    bluetoothSerial.subscribe('\n', (data: string) => {
+      const message = data.trim();
+      this.addLog(`Dato recibido: ${message}`);
+      
+      // Procesar mensaje de peso
+      if (message.startsWith('PESO:')) {
+        const weightValue = message.split(':')[1];
+        const weight = parseFloat(weightValue);
+        
+        if (!isNaN(weight)) {
+          this.weightSubject.next(weight / 1000); // Convertir gramos a kg
+        }
+      }
+    }, (error: any) => {
+      this.addLog(`Error en recepción: ${error}`);
     });
   }
 

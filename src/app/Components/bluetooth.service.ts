@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Platform } from '@ionic/angular';
+import { AndroidPermissions } from '@awesome-cordova-plugins/android-permissions/ngx';
 
 declare var bluetoothSerial: any;
 
@@ -8,112 +9,232 @@ declare var bluetoothSerial: any;
   providedIn: 'root'
 })
 export class BluetoothService {
-  private connectedDeviceAddress: string | null = null;
-  logMessages = new BehaviorSubject<string[]>([]);
+  // Estados centralizados
+  private _connectionStatus = new BehaviorSubject<'disconnected'|'connecting'|'connected'|'error'>('disconnected');
+  private _logs = new BehaviorSubject<string[]>([]);
+  private _weight = new BehaviorSubject<number>(0);
+  private _weightStatus = new BehaviorSubject<string>('Desconocido');
+  private _robotCoordinates = new BehaviorSubject<{lat: number, lng: number}|null>(null);
+  private _pairedDevices = new BehaviorSubject<{name: string, address: string}[]>([]);
+  private _alerts = new BehaviorSubject<string[]>([]);
+  
+  // Observables públicos
+  public connectionStatus$ = this._connectionStatus.asObservable();
+  public logs$ = this._logs.asObservable();
+  public weight$ = this._weight.asObservable();
+  public weightStatus$ = this._weightStatus.asObservable();
+  public robotCoordinates$ = this._robotCoordinates.asObservable();
+  public pairedDevices$ = this._pairedDevices.asObservable();
+  public alerts$ = this._alerts.asObservable();
 
-  constructor(private platform: Platform) {
+  private connectedDeviceAddress: string | null = null;
+
+  constructor(
+    private platform: Platform,
+    private androidPermissions: AndroidPermissions
+  ) {
+    this.initializeBluetooth();
+  }
+
+  private initializeBluetooth(): void {
     this.platform.ready().then(() => {
       if (typeof bluetoothSerial === 'undefined') {
-        console.warn('Bluetooth plugin not available');
+        this.addLog('Error: Plugin Bluetooth no disponible');
+      } else {
+        this.addLog('Bluetooth inicializado correctamente');
       }
     });
   }
 
   private addLog(message: string): void {
-    const logs = this.logMessages.getValue();
-    logs.push(message);
-    this.logMessages.next(logs);
+    const logs = this._logs.getValue();
+    logs.push(`${new Date().toLocaleTimeString()}: ${message}`);
+    this._logs.next(logs.slice(-100)); // Mantener solo los últimos 100 logs
     console.log('[Bluetooth]', message);
   }
 
+  private addAlert(message: string): void {
+    const alerts = this._alerts.getValue();
+    alerts.push(message);
+    this._alerts.next(alerts.slice(-5)); // Mantener solo las últimas 5 alertas
+  }
+
+  async checkPermissions(): Promise<boolean> {
+    if (!this.platform.is('android')) return true;
+    
+    try {
+      const status = await this.androidPermissions.requestPermissions([
+        this.androidPermissions.PERMISSION.BLUETOOTH,
+        this.androidPermissions.PERMISSION.BLUETOOTH_ADMIN,
+        this.androidPermissions.PERMISSION.ACCESS_FINE_LOCATION
+      ]);
+      return status.hasPermission;
+    } catch (error) {
+      this.addLog(`Error en permisos: ${error}`);
+      return false;
+    }
+  }
+
+  async connectToDevice(deviceName = 'CHUAS-BOT'): Promise<boolean> {
+    try {
+      const hasPermissions = await this.checkPermissions();
+      if (!hasPermissions) {
+        throw new Error('Permisos de Bluetooth no concedidos');
+      }
+
+      this._connectionStatus.next('connecting');
+      this.addLog(`Conectando a ${deviceName}...`);
+
+      const devices = await this.listPairedDevices();
+      const device = devices.find(d => d.name === deviceName);
+      
+      if (!device) {
+        throw new Error(`Dispositivo ${deviceName} no encontrado`);
+      }
+
+      return new Promise<boolean>((resolve) => {
+        bluetoothSerial.connect(
+          device.address,
+          () => {
+            this.connectedDeviceAddress = device.address;
+            this._connectionStatus.next('connected');
+            this.addLog(`Conectado exitosamente a ${deviceName}`);
+            this.setupBluetoothListeners();
+            resolve(true);
+          },
+          (error: any) => {
+            this._connectionStatus.next('error');
+            this.addLog(`Error de conexión: ${error}`);
+            resolve(false);
+          }
+        );
+      });
+    } catch (error) {
+      this._connectionStatus.next('error');
+      this.addLog(`Error en conexión: ${error}`);
+      throw error;
+    }
+  }
+
+  private setupBluetoothListeners(): void {
+    // Escuchar datos entrantes
+    bluetoothSerial.subscribe('\n', (data: string) => {
+      try {
+        const message = data.trim();
+        this.addLog(`Dato recibido: ${message}`);
+
+        // Procesamiento de peso
+        if (message.startsWith('PESO:')) {
+          const weightValue = parseFloat(message.split(':')[1]);
+          if (!isNaN(weightValue)) {
+            const weightKg = weightValue;
+            this._weight.next(weightKg);
+            this.updateWeightStatus(weightKg);
+          }
+        }
+        // Procesamiento de coordenadas GPS
+        else if (this.isGpsData(message)) {
+          this.processGpsData(message);
+        }
+        // Procesamiento de alertas
+        else if (message.startsWith('ALERTA:')) {
+          const alertMessage = message.substring(7);
+          this.addAlert(alertMessage);
+        }
+      } catch (error) {
+        this.addLog(`Error procesando datos: ${error}`);
+      }
+    }, (error: any) => {
+      this.addLog(`Error en listener Bluetooth: ${error}`);
+    });
+  }
+
+  private updateWeightStatus(weight: number): void {
+    if (weight <= 0.5) {
+      this._weightStatus.next('Almacenamiento medio vacío');
+    } else if (weight > 0.5 && weight <= 0.7) {
+      this._weightStatus.next('Robot casi lleno');
+    } else if (weight > 0.7) {
+      this._weightStatus.next('Robot lleno');
+    } else {
+      this._weightStatus.next('Desconocido');
+    }
+  }
+
+  private isGpsData(message: string): boolean {
+    const parts = message.split(',');
+    if (parts.length === 2) {
+      const lat = parseFloat(parts[0]);
+      const lng = parseFloat(parts[1]);
+      return !isNaN(lat) && !isNaN(lng);
+    }
+    return false;
+  }
+
+  private processGpsData(message: string): void {
+    const [latStr, lngStr] = message.split(',');
+    const lat = parseFloat(latStr);
+    const lng = parseFloat(lngStr);
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+      this._robotCoordinates.next({ lat, lng });
+      this.addLog(`Coordenadas recibidas: Lat ${lat}, Lng ${lng}`);
+    }
+  }
+
   async listPairedDevices(): Promise<{name: string, address: string}[]> {
-    return new Promise((resolve, reject) => {
-      bluetoothSerial.list(
-        (devices: any[]) => resolve(devices.map(d => ({ name: d.name, address: d.address }))),
+    try {
+      const devices = await new Promise<{name: string, address: string}[]>((resolve, reject) => {
+        bluetoothSerial.list(
+          (devices: any[]) => resolve(devices.map(d => ({ name: d.name, address: d.address }))),
+          (error: any) => reject(error)
+        );
+      });
+      this._pairedDevices.next(devices);
+      return devices;
+    } catch (error) {
+      this.addLog(`Error listando dispositivos: ${error}`);
+      throw error;
+    }
+  }
+
+  disconnect(): void {
+    if (this.connectedDeviceAddress) {
+      bluetoothSerial.disconnect();
+      this.connectedDeviceAddress = null;
+      this._connectionStatus.next('disconnected');
+      this.addLog('Desconectado del dispositivo Bluetooth');
+    }
+  }
+
+  async sendCommand(command: string): Promise<void> {
+    if (!this.connectedDeviceAddress) {
+      throw new Error('No hay dispositivo conectado');
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      bluetoothSerial.write(command + '\n',
+        () => {
+          this.addLog(`Comando enviado: ${command}`);
+          resolve();
+        },
         (error: any) => {
-          this.addLog('Error al listar dispositivos: ' + error);
+          this.addLog(`Error enviando comando: ${error}`);
           reject(error);
         }
       );
     });
   }
 
-  async connectToDevice(name = 'CHUAS-BOT'): Promise<boolean> {
-    try {
-      const devices = await this.listPairedDevices();
-      const device = devices.find(d => d.name === name);
-      
-      if (!device) {
-        throw new Error('Dispositivo no encontrado');
-      }
-
-      return new Promise((resolve) => {
-        bluetoothSerial.connect(
-          device.address,
-          () => {
-            this.connectedDeviceAddress = device.address;
-            this.addLog(`Conectado a ${name}`);
-            resolve(true);
-          },
-          (error: any) => {
-            this.addLog('Error de conexión: ' + error);
-            resolve(false);
-          }
-        );
-      });
-    } catch (error) {
-      this.addLog('Error en connectToDevice: ' + error);
-      throw error;
-    }
+  async requestWeight(): Promise<void> {
+    return this.sendCommand('GET_WEIGHT');
   }
 
-  listenForGpsCoordinates(callback: (lat: number, lng: number) => void) {
-    bluetoothSerial.subscribe('\n', 
-      (data: string) => {
-        const parts = data.trim().split(',');
-        if (parts.length === 2) {
-          const lat = parseFloat(parts[0]);
-          const lng = parseFloat(parts[1]);
-          if (!isNaN(lat) && !isNaN(lng)) {
-            callback(lat, lng);
-          }
-        }
-      },
-      (error: any) => console.error(error)
-    );
+  async requestLocation(): Promise<void> {
+    return this.sendCommand('GET_LOCATION');
   }
 
-  disconnect() {
-    if (this.connectedDeviceAddress) {
-      bluetoothSerial.disconnect();
-      this.connectedDeviceAddress = null;
-    }
-  }
-  async readWeight(): Promise<number | null> {
-    return new Promise((resolve) => {
-      if (!this.connectedDeviceAddress) {
-        resolve(null);
-        return;
-      }
-
-      bluetoothSerial.read((data: string) => {
-        const weight = parseFloat(data.trim());
-        resolve(isNaN(weight) ? null : weight);
-      }, (error: any) => {
-        console.error('Error reading weight:', error);
-        resolve(null);
-      });
-    });
-  }
-  sendData(data: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      bluetoothSerial.write(data, 
-        () => resolve(true),
-        (error: any) => {
-          console.error('Error sending data:', error);
-          resolve(false);
-        }
-      );
-    });
+  async sendGoHomeCommand(lat: number, lng: number): Promise<void> {
+    return this.sendCommand(`GO_HOME:${lat},${lng}`);
   }
 }

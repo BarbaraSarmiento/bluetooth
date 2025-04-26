@@ -78,3 +78,13 @@
   .paired-devices li {
     padding: 4px 0;
   }
+  .weight-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #4285f4;
+  }
+  
+  .weight-raw {
+    font-size: 1rem;
+    color: #666;
+  }
