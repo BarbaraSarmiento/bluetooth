@@ -1,2 +1,10 @@
-<!--src/app/Components/home/home.component.html-->
 <button (click)="connect()">Conectar</button>
+<p>Estado: {{ connectionStatus }}</p>
+
+<!-- Añade esto para ver logs -->
+<div *ngIf="logs.length > 0" class="log-container">
+  <h3>Registro de eventos:</h3>
+  <div *ngFor="let log of logs" class="log-entry">
+    {{ log }}
+  </div>
+</div>
