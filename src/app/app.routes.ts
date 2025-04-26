@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { BluetoothService } from './Components/bluetooth.service';
+import { BluetoothService } from './Components/services/bluetooth.service';
 import { HomeComponent } from './Components/home/home.component';
 import { BluetoothComponent } from './Components/bluetooth/bluetooth.component';
 import { UbicacionComponent } from './Components/ubicacion/ubicacion.component';

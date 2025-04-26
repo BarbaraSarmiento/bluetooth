@@ -1,6 +1,6 @@
 //src/app/Components/home/home.component.ts
 import { Component, OnInit } from '@angular/core';
-import { BluetoothService } from '../bluetooth.service';
+import { BluetoothService } from '../services/bluetooth.service';
 import { NgFor, NgForOf } from '@angular/common';
 import { BluetoothComponent } from '../bluetooth/bluetooth.component';
 import { UbicacionComponent } from '../ubicacion/ubicacion.component';

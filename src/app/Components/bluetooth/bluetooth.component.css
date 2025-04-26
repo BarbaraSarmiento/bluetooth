@@ -1,0 +1,80 @@
+.bluetooth-container {
+    padding: 16px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .error-message {
+    color: #d32f2f;
+    background-color: #fde0e0;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+  
+  .connection-status {
+    margin-bottom: 16px;
+    font-size: 1.1em;
+  }
+  
+  .status-connected {
+    color: #388e3c;
+    font-weight: bold;
+  }
+  
+  .status-connecting {
+    color: #ffa000;
+    font-weight: bold;
+  }
+  
+  .status-error {
+    color: #d32f2f;
+    font-weight: bold;
+  }
+  
+  .weight-display {
+    font-size: 1.2em;
+    margin-bottom: 24px;
+  }
+  
+  .actions button {
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+  
+  .actions button:disabled {
+    background-color: #b0bec5;
+    cursor: not-allowed;
+  }
+  
+  .actions button:hover:not(:disabled) {
+    background-color: #1565c0;
+  }
+  
+  .paired-devices {
+    margin-top: 24px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 16px;
+  }
+  
+  .paired-devices h3 {
+    margin-bottom: 8px;
+  }
+  
+  .paired-devices ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .paired-devices li {
+    padding: 4px 0;
+  }

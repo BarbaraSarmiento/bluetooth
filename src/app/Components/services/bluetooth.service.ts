@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { BluetoothSerial } from '@ionic-native/bluetooth-serial/ngx';
 import { BehaviorSubject } from 'rxjs';
-import { Platform } from '@ionic/angular'; // Asegúrate de que @ionic/angular esté instalado
+
 @Injectable({
   providedIn: 'root'
 })
@@ -10,70 +10,38 @@ export class BluetoothService {
   private connectedDeviceAddress: string | null = null;
   logMessages = new BehaviorSubject<string[]>([]);
 
-  constructor(
-    private bluetoothSerial: BluetoothSerial,
-    private platform: Platform
-  ) {}
+  constructor(private bluetoothSerial: BluetoothSerial) {}
 
-  private addLog(message: string): void {
+  private addLog(message: string) {
     const logs = this.logMessages.getValue();
     logs.push(message);
     this.logMessages.next(logs);
     console.log('[Bluetooth]', message);
   }
 
-  async listPairedDevices(): Promise<{name: string, address: string}[]> {
-    try {
-      await this.platform.ready();
-      const devices = await this.bluetoothSerial.list();
-      return devices.map((d: any) => ({
-        name: d.name,
-        address: d.address || d.id
-      }));
-    } catch (error) {
-      this.addLog('Error al listar dispositivos emparejados: ' + error);
-      throw error;
-    }
-  }
+  async connectToDevice(name = 'CHUAS-BOT') {
+  try {
+    console.log('Intentando conectar...');
+    type BluetoothDevice = { id: string; name: string };
+    const devices: BluetoothDevice[] = await this.bluetoothSerial.list();
+    console.log('Dispositivos encontrados:', devices);
 
-  async connectToDevice(name = 'CHUAS-BOT'): Promise<boolean> {
-    try {
-      await this.platform.ready();
-      
-      const isEnabled = await this.bluetoothSerial.isEnabled();
-      if (!isEnabled) {
-        await this.bluetoothSerial.enable();
-      }
-  
-      this.addLog('Buscando dispositivo...');
-      const devices = await this.listPairedDevices();
-      
-      // Usa el mismo tipo que devuelve listPairedDevices()
-      const device = devices.find(d => d.name === name);
-      
-      if (!device) {
-        this.addLog(`Dispositivo ${name} no encontrado`);
-        throw new Error('Dispositivo no encontrado');
-      }
-  
-      return new Promise<boolean>((resolve) => {
-        this.bluetoothSerial.connect(device.address).subscribe({
-          next: () => {
-            this.connectedDeviceAddress = device.address;
-            this.addLog(`Conectado a ${name}`);
-            resolve(true);
-          },
-          error: (err) => {
-            this.addLog('Error de conexión: ' + err);
-            resolve(false);
-          }
-        });
-      });
-    } catch (error) {
-      this.addLog('Error en connectToDevice: ' + error);
-      throw error;
+    const device = devices.find(d => d.name === name);
+    if (!device) {
+      this.addLog(`No se encontró el dispositivo ${name}`);
+      return;
     }
+
+    await this.bluetoothSerial.connect(device.id).toPromise();
+    this.connectedDeviceAddress = device.id;
+    this.addLog(`Conectado a ${name}`);
+  } catch (error) {
+    this.addLog('Error al conectar: ' + error);
+    console.error(error); // Esto ayudará a ver si hay algún error específico
   }
+}
+
+  
 
   listenForGpsCoordinates(callback: (lat: number, lng: number) => void) {
     this.bluetoothSerial.subscribe('\n').subscribe(data => {

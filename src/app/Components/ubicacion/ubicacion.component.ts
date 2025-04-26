@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { GoogleMapsModule } from '@angular/google-maps';
-import { BluetoothService } from '../bluetooth.service';
+import { BluetoothService } from '../services/bluetooth.service';
 import { CommonModule } from '@angular/common';
 
 interface Marker {

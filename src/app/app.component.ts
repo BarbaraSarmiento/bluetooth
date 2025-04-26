@@ -1,15 +1,13 @@
-//src/app/app.component.ts
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './Components/navbar/navbar.component';
-import { BluetoothService } from './Components/bluetooth.service';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [RouterOutlet, NavbarComponent],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'],
-  providers: [BluetoothService]  // Agregar BluetoothService en providers
+  styleUrls: ['./app.component.css']
 })
 export class AppComponent {
   title = 'myapp';
