@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Platform } from '@ionic/angular';
-import { AndroidPermissions } from '@awesome-cordova-plugins/android-permissions/ngx';
 
 declare var bluetoothSerial: any;
 
@@ -29,10 +28,7 @@ export class BluetoothService {
 
   private connectedDeviceAddress: string | null = null;
 
-  constructor(
-    private platform: Platform,
-    private androidPermissions: AndroidPermissions
-  ) {
+  constructor(private platform: Platform) {
     this.initializeBluetooth();
   }
 
@@ -49,30 +45,34 @@ export class BluetoothService {
   private addLog(message: string): void {
     const logs = this._logs.getValue();
     logs.push(`${new Date().toLocaleTimeString()}: ${message}`);
-    this._logs.next(logs.slice(-100)); // Mantener solo los últimos 100 logs
+    this._logs.next(logs.slice(-100));
     console.log('[Bluetooth]', message);
   }
 
   private addAlert(message: string): void {
     const alerts = this._alerts.getValue();
     alerts.push(message);
-    this._alerts.next(alerts.slice(-5)); // Mantener solo las últimas 5 alertas
+    this._alerts.next(alerts.slice(-5));
   }
 
   async checkPermissions(): Promise<boolean> {
     if (!this.platform.is('android')) return true;
     
-    try {
-      const status = await this.androidPermissions.requestPermissions([
-        this.androidPermissions.PERMISSION.BLUETOOTH,
-        this.androidPermissions.PERMISSION.BLUETOOTH_ADMIN,
-        this.androidPermissions.PERMISSION.ACCESS_FINE_LOCATION
-      ]);
-      return status.hasPermission;
-    } catch (error) {
-      this.addLog(`Error en permisos: ${error}`);
-      return false;
-    }
+    return new Promise((resolve) => {
+      bluetoothSerial.hasPermission(
+        (hasPermission: boolean) => {
+          if (hasPermission) {
+            resolve(true);
+          } else {
+            bluetoothSerial.requestPermission(
+              (granted: boolean) => resolve(granted),
+              () => resolve(false)
+            );
+          }
+        },
+        () => resolve(false)
+      );
+    });
   }
 
   async connectToDevice(deviceName = 'CHUAS-BOT'): Promise<boolean> {
@@ -84,6 +84,18 @@ export class BluetoothService {
 
       this._connectionStatus.next('connecting');
       this.addLog(`Conectando a ${deviceName}...`);
+
+      // Verificar si Bluetooth está activado
+      const isEnabled = await new Promise<boolean>((resolve) => {
+        bluetoothSerial.isEnabled(
+          () => resolve(true),
+          () => resolve(false)
+        );
+      });
+
+      if (!isEnabled) {
+        throw new Error('Bluetooth no está activado');
+      }
 
       const devices = await this.listPairedDevices();
       const device = devices.find(d => d.name === deviceName);
@@ -117,13 +129,11 @@ export class BluetoothService {
   }
 
   private setupBluetoothListeners(): void {
-    // Escuchar datos entrantes
     bluetoothSerial.subscribe('\n', (data: string) => {
       try {
         const message = data.trim();
         this.addLog(`Dato recibido: ${message}`);
 
-        // Procesamiento de peso
         if (message.startsWith('PESO:')) {
           const weightValue = parseFloat(message.split(':')[1]);
           if (!isNaN(weightValue)) {
@@ -132,11 +142,9 @@ export class BluetoothService {
             this.updateWeightStatus(weightKg);
           }
         }
-        // Procesamiento de coordenadas GPS
         else if (this.isGpsData(message)) {
           this.processGpsData(message);
         }
-        // Procesamiento de alertas
         else if (message.startsWith('ALERTA:')) {
           const alertMessage = message.substring(7);
           this.addAlert(alertMessage);
@@ -236,5 +244,20 @@ export class BluetoothService {
 
   async sendGoHomeCommand(lat: number, lng: number): Promise<void> {
     return this.sendCommand(`GO_HOME:${lat},${lng}`);
+  }
+
+  async enableBluetooth(): Promise<boolean> {
+    return new Promise((resolve) => {
+      bluetoothSerial.enable(
+        () => resolve(true),
+        () => resolve(false)
+      );
+    });
+  }
+
+  async showBluetoothSettings(): Promise<void> {
+    if (this.platform.is('android')) {
+      bluetoothSerial.showBluetoothSettings();
+    }
   }
 }

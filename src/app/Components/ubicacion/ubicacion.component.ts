@@ -23,7 +23,7 @@ interface Marker {
 export class UbicacionComponent implements OnInit, OnDestroy {
   // Configuración del mapa
   center: google.maps.LatLngLiteral = { lat: -2.9001285, lng: -79.0058965 }; // Ubicación inicial (Universidad de Cuenca)
-  zoom = 15;
+  zoom = 12;
   mapOptions: google.maps.MapOptions = {
     mapTypeId: 'hybrid',
     disableDefaultUI: true,
