@@ -1,6 +1,6 @@
 //src/app/Components/navbar/navbar.component.ts
 import { Component, OnInit } from '@angular/core';
-import { BluetoothService } from '../services/bluetooth.service';
+import { BluetoothService } from '../bluetooth.service';
 import { RouterOutlet } from '@angular/router';
 
 @Component({

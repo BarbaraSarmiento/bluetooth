@@ -1,8 +1,9 @@
-// src/app/Components/bluetooth.service.ts
 import { Injectable } from '@angular/core';
-import { BluetoothSerial } from '@ionic-native/bluetooth-serial/ngx';
 import { BehaviorSubject } from 'rxjs';
-import { Platform } from '@ionic/angular'; // Asegúrate de que @ionic/angular esté instalado
+import { Platform } from '@ionic/angular';
+
+declare var bluetoothSerial: any;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -10,10 +11,13 @@ export class BluetoothService {
   private connectedDeviceAddress: string | null = null;
   logMessages = new BehaviorSubject<string[]>([]);
 
-  constructor(
-    private bluetoothSerial: BluetoothSerial,
-    private platform: Platform
-  ) {}
+  constructor(private platform: Platform) {
+    this.platform.ready().then(() => {
+      if (typeof bluetoothSerial === 'undefined') {
+        console.warn('Bluetooth plugin not available');
+      }
+    });
+  }
 
   private addLog(message: string): void {
     const logs = this.logMessages.getValue();
@@ -23,51 +27,39 @@ export class BluetoothService {
   }
 
   async listPairedDevices(): Promise<{name: string, address: string}[]> {
-    try {
-      await this.platform.ready();
-      const devices = await this.bluetoothSerial.list();
-      return devices.map((d: any) => ({
-        name: d.name,
-        address: d.address || d.id
-      }));
-    } catch (error) {
-      this.addLog('Error al listar dispositivos emparejados: ' + error);
-      throw error;
-    }
+    return new Promise((resolve, reject) => {
+      bluetoothSerial.list(
+        (devices: any[]) => resolve(devices.map(d => ({ name: d.name, address: d.address }))),
+        (error: any) => {
+          this.addLog('Error al listar dispositivos: ' + error);
+          reject(error);
+        }
+      );
+    });
   }
 
   async connectToDevice(name = 'CHUAS-BOT'): Promise<boolean> {
     try {
-      await this.platform.ready();
-      
-      const isEnabled = await this.bluetoothSerial.isEnabled();
-      if (!isEnabled) {
-        await this.bluetoothSerial.enable();
-      }
-  
-      this.addLog('Buscando dispositivo...');
       const devices = await this.listPairedDevices();
-      
-      // Usa el mismo tipo que devuelve listPairedDevices()
       const device = devices.find(d => d.name === name);
       
       if (!device) {
-        this.addLog(`Dispositivo ${name} no encontrado`);
         throw new Error('Dispositivo no encontrado');
       }
-  
-      return new Promise<boolean>((resolve) => {
-        this.bluetoothSerial.connect(device.address).subscribe({
-          next: () => {
+
+      return new Promise((resolve) => {
+        bluetoothSerial.connect(
+          device.address,
+          () => {
             this.connectedDeviceAddress = device.address;
             this.addLog(`Conectado a ${name}`);
             resolve(true);
           },
-          error: (err) => {
-            this.addLog('Error de conexión: ' + err);
+          (error: any) => {
+            this.addLog('Error de conexión: ' + error);
             resolve(false);
           }
-        });
+        );
       });
     } catch (error) {
       this.addLog('Error en connectToDevice: ' + error);
@@ -76,75 +68,52 @@ export class BluetoothService {
   }
 
   listenForGpsCoordinates(callback: (lat: number, lng: number) => void) {
-    this.bluetoothSerial.subscribe('\n').subscribe(data => {
-      const parts = data.trim().split(',');
-      if (parts.length === 2) {
-        const lat = parseFloat(parts[0]);
-        const lng = parseFloat(parts[1]);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          this.addLog(`Coordenadas recibidas: ${lat}, ${lng}`);
-          callback(lat, lng);
-        }
-      }
-    });
-  }
-
-  sendData(data: string) {
-    if (!this.connectedDeviceAddress) {
-      this.addLog('No hay dispositivo conectado');
-      return;
-    }
-
-    this.bluetoothSerial.write(data + '\n')
-      .then(() => this.addLog('Datos enviados: ' + data))
-      .catch(err => this.addLog('Error al enviar datos: ' + err));
-  }
-
-  disconnect() {
-    if (this.connectedDeviceAddress) {
-      this.bluetoothSerial.disconnect();
-      this.connectedDeviceAddress = null;
-      this.addLog('Desconectado del dispositivo');
-    }
-  }
-
-  async readGpsCoordinates(): Promise<{ lat: number; lng: number } | null> {
-    return new Promise((resolve) => {
-      this.bluetoothSerial.subscribe('\n').subscribe(data => {
+    bluetoothSerial.subscribe('\n', 
+      (data: string) => {
         const parts = data.trim().split(',');
         if (parts.length === 2) {
           const lat = parseFloat(parts[0]);
           const lng = parseFloat(parts[1]);
           if (!isNaN(lat) && !isNaN(lng)) {
-            this.addLog(`GPS por lectura directa: ${lat}, ${lng}`);
-            resolve({ lat, lng });
-          } else {
-            resolve(null);
+            callback(lat, lng);
           }
-        } else {
-          resolve(null);
         }
+      },
+      (error: any) => console.error(error)
+    );
+  }
+
+  disconnect() {
+    if (this.connectedDeviceAddress) {
+      bluetoothSerial.disconnect();
+      this.connectedDeviceAddress = null;
+    }
+  }
+  async readWeight(): Promise<number | null> {
+    return new Promise((resolve) => {
+      if (!this.connectedDeviceAddress) {
+        resolve(null);
+        return;
+      }
+
+      bluetoothSerial.read((data: string) => {
+        const weight = parseFloat(data.trim());
+        resolve(isNaN(weight) ? null : weight);
+      }, (error: any) => {
+        console.error('Error reading weight:', error);
+        resolve(null);
       });
     });
   }
-
-  async readWeight(): Promise<number | null> {
-    if (!this.connectedDeviceAddress) {
-      this.addLog('No hay dispositivo conectado');
-      return null;
-    }
-  
+  sendData(data: string): Promise<boolean> {
     return new Promise((resolve) => {
-      this.bluetoothSerial.subscribe('\n').subscribe(data => {
-        const parsedWeight = parseFloat(data.trim());
-        if (!isNaN(parsedWeight)) {
-          this.addLog(`Peso recibido: ${parsedWeight}`);
-          resolve(parsedWeight);
-        } else {
-          this.addLog(`Dato recibido no es un número válido: ${data}`);
-          resolve(null);
+      bluetoothSerial.write(data, 
+        () => resolve(true),
+        (error: any) => {
+          console.error('Error sending data:', error);
+          resolve(false);
         }
-      });
+      );
     });
   }
 }

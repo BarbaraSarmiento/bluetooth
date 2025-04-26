@@ -1,3 +1,4 @@
+//src/app/app.routes.ts
 import { Routes } from '@angular/router';
 import { BluetoothService } from './Components/services/bluetooth.service';
 import { HomeComponent } from './Components/home/home.component';

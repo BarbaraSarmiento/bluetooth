@@ -1,9 +1,14 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.uets.blutu',
   appName: 'Bluetooth',
-  webDir: 'dist/myapp/browser'
+  webDir: 'dist/myapp/browser',
+  plugins: {
+    BluetoothSerial: {
+      neverForLocation: true
+    }
+  }
 };
 
 export default config;

@@ -1,18 +1,5 @@
+<!-- src/app/Components/bluetooth/bluetooth.component.html -->
 <div class="bluetooth-container">
-  <div *ngIf="isLoading" class="loading">Conectando...</div>
-  
-  <div *ngIf="errorMessage" class="error">
-    {{ errorMessage }}
-  </div>
-  
-  <div *ngIf="isConnected && weight !== null" class="weight-display">
-    Peso actual: <strong>{{ weight }} kg</strong>
-  </div>
-  
-  <div *ngIf="isConnected && weight === null" class="status">
-    Conectado, esperando datos...
-  </div>
-</div><div class="bluetooth-container">
   <div *ngIf="isLoading" class="loading">
     <p>Cargando...</p>
   </div>
