@@ -1,5 +1,4 @@
-//src/app/Components/bluetooth/bluetooth.component.ts
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BluetoothService } from '../bluetooth.service';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -11,42 +10,65 @@ import { Subscription } from 'rxjs';
   templateUrl: './bluetooth.component.html',
   styleUrls: ['./bluetooth.component.css']
 })
-export class BluetoothComponent implements OnDestroy {
+export class BluetoothComponent implements OnInit, OnDestroy {
   private subs: Subscription[] = [];
   currentWeight: number = 0;
   weightStatus: string = 'Desconocido';
   alerts: string[] = [];
+  connectionStatus: string = 'disconnected';
+  isLoading: boolean = false;
 
-  constructor(public bluetoothService: BluetoothService) {
-    // Solicitar el peso actual al cargar el componente
-    this.bluetoothService.requestWeight();
+  constructor(public bluetoothService: BluetoothService) {}
+
+  ngOnInit() {
+    console.log('Inicializando componente Bluetooth');
     
     this.subs.push(
-      this.bluetoothService.weight$.subscribe(weight => {
-        this.currentWeight = weight;
+      this.bluetoothService.weight$.subscribe({
+        next: (weight) => {
+          console.log('Nuevo peso recibido:', weight);
+          this.currentWeight = weight;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error en weight$:', err);
+          this.isLoading = false;
+        }
       }),
+      
       this.bluetoothService.weightStatus$.subscribe(status => {
         this.weightStatus = status;
       }),
+      
       this.bluetoothService.alerts$.subscribe(alerts => {
-        this.alerts = alerts;
+        this.alerts = alerts.slice(-3); // Mostrar solo las 3 últimas alertas
+      }),
+      
+      this.bluetoothService.connectionStatus$.subscribe(status => {
+        this.connectionStatus = status;
       })
     );
+
+    // Solicitar peso inicial
+    this.requestWeight();
   }
 
   ngOnDestroy() {
     this.subs.forEach(sub => sub.unsubscribe());
   }
 
-  // Método para obtener clase CSS según estado del peso
   getWeightStatusClass(): string {
-    if (this.weightStatus.includes('medio vacío')) return 'medium';
-    if (this.weightStatus.includes('casi lleno')) return 'almost-full';
-    if (this.weightStatus.includes('lleno')) return 'full';
-    return 'unknown';
+    if (!this.currentWeight) return 'unknown';
+    if (this.currentWeight <= 0.5) return 'medium';
+    if (this.currentWeight <= 0.7) return 'almost-full';
+    return 'full';
   }
 
   requestWeight() {
-    this.bluetoothService.requestWeight();
+    this.isLoading = true;
+    this.bluetoothService.requestWeight().catch(err => {
+      console.error('Error al solicitar peso:', err);
+      this.isLoading = false;
+    });
   }
 }

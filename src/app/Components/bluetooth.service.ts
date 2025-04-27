@@ -56,26 +56,6 @@ export class BluetoothService {
     this._alerts.next(alerts.slice(-5));
   }
 
-  //async checkPermissions(): Promise<boolean> {
-    //if (!this.platform.is('android')) return true;
-    
-    //return new Promise((resolve) => {
-      //bluetoothSerial.hasPermission(
-        //(hasPermission: boolean) => {
-          //if (hasPermission) {
-            //resolve(true);
-          //} else {
-            //bluetoothSerial.requestPermission(
-              //(granted: boolean) => resolve(granted),
-              //() => resolve(false)
-            //);
-          //}
-        //},
-        //() => resolve(false)
-      //);
-    //});
-  
-
   async connectToDevice(deviceName = 'CHUAS-BOT'): Promise<boolean> {
     try {
       // No verificamos permisos en esta versión simplificada
@@ -129,40 +109,26 @@ export class BluetoothService {
   }
 
   private setupBluetoothListeners(): void {
-    // Primero verifica si hay datos pendientes
-    bluetoothSerial.read((data: string) => {
-      this.addLog(`Datos pendientes: ${data}`);
-    });
-  
-    // Configura el listener para nuevos datos
     bluetoothSerial.subscribe('\n', (data: string) => {
-      try {
-        const message = data.trim();
-        this.addLog(`[RAW] ${message}`);  // Log crudo para diagnóstico
+      const message = data.trim();
+      console.log('[DEBUG] Mensaje RAW recibido:', message); // Debug detallado
   
-        // Procesamiento más flexible del peso
-        const weightMatch = message.match(/PESO:?([0-9.]+)/i);
-        if (weightMatch && weightMatch[1]) {
-          const weightValue = parseFloat(weightMatch[1]);
-          if (!isNaN(weightValue)) {
-            this._weight.next(weightValue);
-            this.updateWeightStatus(weightValue);
-            this.addLog(`Peso actualizado: ${weightValue} kg`);
-            return;
-          }
+      // Procesamiento más robusto del peso
+      if (message.includes('PESO')) {  // Más flexible que startsWith
+        const weightValue = parseFloat(message.split(':')[1]);
+        if (!isNaN(weightValue)) {
+          console.log('[DEBUG] Peso parseado:', weightValue); // Confirmar parsing
+          this._weight.next(weightValue);
+          this.updateWeightStatus(weightValue);
+        } else {
+          console.warn('[DEBUG] No se pudo parsear peso de:', message);
         }
-        else if (this.isGpsData(message)) {
-          this.processGpsData(message);
-        }
-        else if (message.startsWith('ALERTA:')) {
-          const alertMessage = message.substring(7);
-          this.addAlert(alertMessage);
-        }
-      } catch (error) {
-        this.addLog(`Error procesando datos: ${error}`);
+        return;
       }
+      
+      // Resto del procesamiento para GPS y alertas...
     }, (error: any) => {
-      this.addLog(`Error en listener Bluetooth: ${error}`);
+      console.error('Error en listener Bluetooth:', error);
     });
   }
 

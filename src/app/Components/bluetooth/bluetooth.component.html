@@ -1,24 +1,39 @@
-<!--src/app/Components/bluetooth/bluetooth.component.html-->
 <div class="bluetooth-container">
+  <!-- Tarjeta de Peso -->
   <div class="card">
     <h2>Sensor de Peso</h2>
     
     <div class="weight-container">
-      <div class="weight-value">
-        <span class="weight-label">Peso Actual:</span>
-        <span class="weight-number">{{ currentWeight.toFixed(3) }} kg</span>
-      </div>
-      
-      <div class="weight-status" [ngClass]="getWeightStatusClass()">
-        {{ weightStatus }}
-      </div>
-      
-      <button (click)="requestWeight()" class="action-button">
-        Actualizar Peso
-      </button>
+      @if (connectionStatus === 'connected') {
+        <div class="weight-value">
+          <span class="weight-label">Peso Actual:</span>
+          @if (!isLoading) {
+            <span class="weight-number">{{ (currentWeight | number:'1.2-3') }} kg</span>
+          } @else {
+            <span class="loading-text">Cargando...</span>
+          }
+        </div>
+        
+        <div class="weight-status" [ngClass]="getWeightStatusClass()">
+          {{ weightStatus }}
+        </div>
+        
+        <button (click)="requestWeight()" class="action-button" [disabled]="isLoading">
+          {{ isLoading ? 'Actualizando...' : 'Actualizar Peso' }}
+        </button>
+      } @else if (connectionStatus === 'connecting') {
+        <div class="connection-status connecting">
+          Conectando al robot CHUAS-BOT...
+        </div>
+      } @else {
+        <div class="connection-status disconnected">
+          Bluetooth desconectado
+        </div>
+      }
     </div>
   </div>
 
+  <!-- Tarjeta de Alertas -->
   <div class="card">
     <h2>Alertas</h2>
     
@@ -33,5 +48,12 @@
         <p class="no-alerts">No hay alertas recientes</p>
       }
     </div>
+  </div>
+
+  <!-- Debug (solo para desarrollo) -->
+  <div class="debug-info" *ngIf="false">
+    <p>Estado: {{ connectionStatus }}</p>
+    <p>Peso: {{ currentWeight }}</p>
+    <p>Cargando: {{ isLoading }}</p>
   </div>
 </div>
