@@ -1,3 +1,4 @@
+//src/app/Components/bluetooth/bluetooth.component.ts
 import { Component, OnDestroy } from '@angular/core';
 import { BluetoothService } from '../bluetooth.service';
 import { CommonModule } from '@angular/common';

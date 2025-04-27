@@ -1,3 +1,4 @@
+//src/app/Components/bluetooth.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Platform } from '@ionic/angular';
@@ -128,17 +129,26 @@ export class BluetoothService {
   }
 
   private setupBluetoothListeners(): void {
+    // Primero verifica si hay datos pendientes
+    bluetoothSerial.read((data: string) => {
+      this.addLog(`Datos pendientes: ${data}`);
+    });
+  
+    // Configura el listener para nuevos datos
     bluetoothSerial.subscribe('\n', (data: string) => {
       try {
         const message = data.trim();
-        this.addLog(`Dato recibido: ${message}`);
-
-        if (message.startsWith('PESO:')) {
-          const weightValue = parseFloat(message.split(':')[1]);
+        this.addLog(`[RAW] ${message}`);  // Log crudo para diagnóstico
+  
+        // Procesamiento más flexible del peso
+        const weightMatch = message.match(/PESO:?([0-9.]+)/i);
+        if (weightMatch && weightMatch[1]) {
+          const weightValue = parseFloat(weightMatch[1]);
           if (!isNaN(weightValue)) {
-            const weightKg = weightValue;
-            this._weight.next(weightKg);
-            this.updateWeightStatus(weightKg);
+            this._weight.next(weightValue);
+            this.updateWeightStatus(weightValue);
+            this.addLog(`Peso actualizado: ${weightValue} kg`);
+            return;
           }
         }
         else if (this.isGpsData(message)) {
