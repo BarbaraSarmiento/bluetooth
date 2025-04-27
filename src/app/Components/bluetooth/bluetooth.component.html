@@ -1,20 +1,5 @@
 <div class="bluetooth-container">
   <div class="card">
-    <h2>Conexión Bluetooth</h2>
-    
-    <div class="status-container">
-      <span class="status-label">Estado:</span>
-      <span class="status-badge" [ngClass]="getStatusClass()">
-        {{ getStatusText() }}
-      </span>
-    </div>
-    
-    <button (click)="toggleConnection()" class="action-button">
-      {{ currentConnectionStatus === 'connected' ? 'Desconectar' : 'Conectar' }}
-    </button>
-  </div>
-
-  <div class="card">
     <h2>Sensor de Peso</h2>
     
     <div class="weight-container">

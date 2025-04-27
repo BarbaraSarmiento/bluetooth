@@ -1,7 +1,6 @@
 <div class="home-page">
   <header class="page-header">
-    <h1>Robot CHUAS</h1>
-    <button (click)="toggleMenu()" class="menu-button">☰</button>
+    <h1>Conectarse</h1>
   </header>
 
   <main class="main-content">
@@ -16,30 +15,3 @@
         Conectar al Robot
       </button>
     </div>
-    
-    <div class="card quick-actions">
-      <h3>Operaciones Rápidas</h3>
-      
-      <a routerLink="/bluetooth" class="action-link">
-        Control Bluetooth
-      </a>
-      
-      <a routerLink="/ubicacion" class="action-link">
-        Ubicación
-      </a>
-    </div>
-  </main>
-
-  <nav class="side-menu" [class.active]="isMenuActive">
-    <div class="menu-header">
-      <h3>Menú</h3>
-      <button (click)="toggleMenu()" class="close-menu">×</button>
-    </div>
-    
-    <ul class="menu-list">
-      <li><a routerLink="/home" (click)="toggleMenu()">Inicio</a></li>
-      <li><a routerLink="/bluetooth" (click)="toggleMenu()">Control Bluetooth</a></li>
-      <li><a routerLink="/ubicacion" (click)="toggleMenu()">Ubicación</a></li>
-    </ul>
-  </nav>
-</div>
