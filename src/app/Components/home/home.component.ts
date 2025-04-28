@@ -33,12 +33,12 @@ export class HomeComponent implements OnInit {
     this.isMenuActive = !this.isMenuActive;
   }
 
-  async connect() {
+async connect() {
     this.isLoading = true;
     try {
       const connected = await this.bluetoothService.connectToDevice();
       if (connected) {
-        this.router.navigate(['/bluetooth']); // Solo navega si se conectó
+        this.router.navigate(['']); 
       }
     } catch (error) {
       // Maneja errores

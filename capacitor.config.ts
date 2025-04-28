@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.uets.blutu',
-  appName: 'Bluetooth',
+  appName: 'ChuasBot',
   webDir: 'dist/myapp/browser',
   plugins: {
     BluetoothSerial: {
