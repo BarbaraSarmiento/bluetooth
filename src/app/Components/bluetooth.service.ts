@@ -101,12 +101,11 @@ export class BluetoothService {
           device.address,
           () => {
             this.ngZone.run(() => {
+              // Elimina cualquier router.navigate() de aquí
               this.connectedDeviceAddress = device.address;
               this._connectionStatus.next('connected');
               this._isConnected.next(true);
-              this.addLog(`Conectado exitosamente a ${deviceName}`);
-              this.setupBluetoothListeners();
-              resolve(true);
+              resolve(true); // Solo resuelve true/false
             });
           },
           (error: any) => {

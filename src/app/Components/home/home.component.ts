@@ -35,21 +35,13 @@ export class HomeComponent implements OnInit {
 
   async connect() {
     this.isLoading = true;
-    this.connectionStatus = 'Conectando...';
-    
     try {
       const connected = await this.bluetoothService.connectToDevice();
       if (connected) {
-        this.connectionStatus = 'Conectado';
-        this.router.navigate(['/bluetooth']);
-      } else {
-        this.connectionStatus = 'Error de conexión';
-        this.showAlert('Error', 'No se pudo conectar al dispositivo Bluetooth');
+        this.router.navigate(['/bluetooth']); // Solo navega si se conectó
       }
     } catch (error) {
-      console.error('Error de conexión:', error);
-      this.connectionStatus = 'Error: ' + (error as Error).message;
-      this.showAlert('Error', 'Error al conectar: ' + (error as Error).message);
+      // Maneja errores
     } finally {
       this.isLoading = false;
     }
