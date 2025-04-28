@@ -1,12 +1,11 @@
-<!--src/app/Components/home/home.component.html-->
 <nav class="navbar">
-    <a > ChuasBot</a>
-    <button class="menu-toggle" (click)="toggleMenu()">☰</button>
-    <div class="navbar-links" [class.active]="isMenuActive">
-      <a href="">Home</a>
-      <a href="Ubicacion" class="active">Ubicación</a>
-      <a href="Bluetooth">Almacenamiento</a>
-    </div>
-  </nav>
-  
-  <router-outlet></router-outlet>
+  <a>ChuasBot</a>
+  <button class="menu-toggle" (click)="toggleMenu()">☰</button>
+  <div class="navbar-links" [class.active]="isMenuActive">
+    <a href="">Home</a>
+    <a href="Ubicacion">Ubicación</a>
+    <a href="Bluetooth">Almacenamiento</a>
+  </div>
+</nav>
+
+<router-outlet></router-outlet>

@@ -1,15 +1,16 @@
-//src/app/Components/bluetooth.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Platform } from '@ionic/angular';
+import { BluetoothSerial } from '@awesome-cordova-plugins/bluetooth-serial/ngx';
 
 declare var bluetoothSerial: any;
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class BluetoothService {
   // Estados centralizados
+  private _isConnected = new BehaviorSubject<boolean>(false);
+  public isConnected$ = this._isConnected.asObservable();
+
   private _connectionStatus = new BehaviorSubject<'disconnected'|'connecting'|'connected'|'error'>('disconnected');
   private _logs = new BehaviorSubject<string[]>([]);
   private _weight = new BehaviorSubject<number>(0);
@@ -28,9 +29,11 @@ export class BluetoothService {
   public alerts$ = this._alerts.asObservable();
 
   private connectedDeviceAddress: string | null = null;
+  private dataSubscription: any = null;
 
-  constructor(private platform: Platform) {
+  constructor(private platform: Platform, private ngZone: NgZone) {
     this.initializeBluetooth();
+    this.checkInitialConnection();
   }
 
   private initializeBluetooth(): void {
@@ -41,6 +44,20 @@ export class BluetoothService {
         this.addLog('Bluetooth inicializado correctamente');
       }
     });
+  }
+
+  private checkInitialConnection(): void {
+    bluetoothSerial.isConnected(
+      () => {
+        this._isConnected.next(true);
+        this._connectionStatus.next('connected');
+        this.setupBluetoothListeners();
+      },
+      () => {
+        this._isConnected.next(false);
+        this._connectionStatus.next('disconnected');
+      }
+    );
   }
 
   private addLog(message: string): void {
@@ -58,14 +75,9 @@ export class BluetoothService {
 
   async connectToDevice(deviceName = 'CHUAS-BOT'): Promise<boolean> {
     try {
-      // No verificamos permisos en esta versión simplificada
-    this.addLog('Saltando verificación de permisos Bluetooth');
-
-
       this._connectionStatus.next('connecting');
       this.addLog(`Conectando a ${deviceName}...`);
 
-      // Verificar si Bluetooth está activado
       const isEnabled = await new Promise<boolean>((resolve) => {
         bluetoothSerial.isEnabled(
           () => resolve(true),
@@ -88,16 +100,21 @@ export class BluetoothService {
         bluetoothSerial.connect(
           device.address,
           () => {
-            this.connectedDeviceAddress = device.address;
-            this._connectionStatus.next('connected');
-            this.addLog(`Conectado exitosamente a ${deviceName}`);
-            this.setupBluetoothListeners();
-            resolve(true);
+            this.ngZone.run(() => {
+              this.connectedDeviceAddress = device.address;
+              this._connectionStatus.next('connected');
+              this._isConnected.next(true);
+              this.addLog(`Conectado exitosamente a ${deviceName}`);
+              this.setupBluetoothListeners();
+              resolve(true);
+            });
           },
           (error: any) => {
-            this._connectionStatus.next('error');
-            this.addLog(`Error de conexión: ${error}`);
-            resolve(false);
+            this.ngZone.run(() => {
+              this._connectionStatus.next('error');
+              this.addLog(`Error de conexión: ${error}`);
+              resolve(false);
+            });
           }
         );
       });
@@ -109,28 +126,48 @@ export class BluetoothService {
   }
 
   private setupBluetoothListeners(): void {
-    bluetoothSerial.subscribe('\n', (data: string) => {
-      const message = data.trim();
-      console.log('[DEBUG] Mensaje RAW recibido:', message); // Debug detallado
-  
-      // Procesamiento más robusto del peso
-      if (message.includes('PESO')) {  // Más flexible que startsWith
-        const weightValue = parseFloat(message.split(':')[1]);
-        if (!isNaN(weightValue)) {
-          console.log('[DEBUG] Peso parseado:', weightValue); // Confirmar parsing
-          this._weight.next(weightValue);
-          this.updateWeightStatus(weightValue);
-        } else {
-          console.warn('[DEBUG] No se pudo parsear peso de:', message);
+    // Limpiar suscripción anterior si existe
+    if (this.dataSubscription) {
+      bluetoothSerial.unsubscribe();
+      this.dataSubscription = null;
+    }
+
+    this.dataSubscription = bluetoothSerial.subscribe('\n', (data: string) => {
+      this.ngZone.run(() => {
+        const message = data.trim();
+        console.log('[DEBUG] Mensaje RAW recibido:', message);
+
+        if (message.includes('PESO')) {
+          const weightValue = parseFloat(message.split(':')[1]);
+          if (!isNaN(weightValue)) {
+            console.log('[DEBUG] Peso parseado:', weightValue);
+            this._weight.next(weightValue);
+            this.updateWeightStatus(weightValue);
+          } else {
+            console.warn('[DEBUG] No se pudo parsear peso de:', message);
+          }
+          return;
         }
-        return;
-      }
-      
-      // Resto del procesamiento para GPS y alertas...
+
+        if (this.isGpsData(message)) {
+          this.processGpsData(message);
+        } else {
+          this.addLog(`Datos recibidos: ${message}`);
+        }
+      });
     }, (error: any) => {
-      console.error('Error en listener Bluetooth:', error);
+      this.ngZone.run(() => {
+        console.error('Error en listener Bluetooth:', error);
+        this.addLog(`Error en conexión: ${error}`);
+        this._connectionStatus.next('error');
+        this._isConnected.next(false);
+      });
     });
   }
+
+  // Resto de los métodos permanecen igual...
+  // ... (updateWeightStatus, isGpsData, processGpsData, listPairedDevices, etc.)
+
 
   private updateWeightStatus(weight: number): void {
     if (weight <= 0.5) {

@@ -1,32 +1,22 @@
-//src/app/Components/navbar/navbar.component.ts
 import { Component, OnInit } from '@angular/core';
 import { BluetoothService } from '../bluetooth.service';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterOutlet, ],  templateUrl: './navbar.component.html',
+  imports: [RouterOutlet],
+  templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
-export class NavbarComponent  implements OnInit {
-  
-  constructor() {}
-
-
-
+export class NavbarComponent implements OnInit {
   logs: string[] = [];
   isMenuActive = false;
 
+  constructor() {}
+
   toggleMenu(): void {
     this.isMenuActive = !this.isMenuActive;
-    console.log(this.isMenuActive);
   }
-  ngOnInit() {
-    /*this.bluetoothService.logMessages.subscribe(logs => {
-      this.logs = logs;
-    });*/
-  }
-  connect() {
-   // this.bluetoothService.connectToDevice();
-  }
+
+  ngOnInit() {}
 }

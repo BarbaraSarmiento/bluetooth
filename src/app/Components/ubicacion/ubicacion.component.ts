@@ -21,8 +21,7 @@ interface Marker {
   styleUrls: ['./ubicacion.component.css']
 })
 export class UbicacionComponent implements OnInit, OnDestroy {
-  // Configuración del mapa
-  center: google.maps.LatLngLiteral = { lat: -2.9001285, lng: -79.0058965 }; // Ubicación inicial (Universidad de Cuenca)
+  center: google.maps.LatLngLiteral = { lat: -2.9001285, lng: -79.0058965 };
   zoom = 12;
   mapOptions: google.maps.MapOptions = {
     mapTypeId: 'hybrid',
@@ -30,7 +29,6 @@ export class UbicacionComponent implements OnInit, OnDestroy {
     zoomControl: true
   };
 
-  // Marcadores
   markers: Marker[] = [];
   private subscriptions: Subscription[] = [];
   userLocation: google.maps.LatLngLiteral | null = null;
@@ -63,7 +61,6 @@ export class UbicacionComponent implements OnInit, OnDestroy {
   }
 
   private iniciarSuscripciones() {
-    // Suscripción a coordenadas del robot
     const subCoords = this.bluetoothService.robotCoordinates$.subscribe(coords => {
       if (coords) {
         this.robotLocation = coords;

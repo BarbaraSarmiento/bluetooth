@@ -3,6 +3,7 @@ import { BluetoothService } from '../bluetooth.service';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { AlertController } from '@ionic/angular/standalone';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -14,10 +15,12 @@ import { AlertController } from '@ionic/angular/standalone';
 export class HomeComponent implements OnInit {
   connectionStatus = 'Desconectado';
   isMenuActive = false;
+  isLoading = false;
 
   constructor(
     private bluetoothService: BluetoothService,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -31,15 +34,24 @@ export class HomeComponent implements OnInit {
   }
 
   async connect() {
+    this.isLoading = true;
+    this.connectionStatus = 'Conectando...';
+    
     try {
       const connected = await this.bluetoothService.connectToDevice();
       if (connected) {
-        await this.showAlert('Éxito', 'Conexión Bluetooth establecida');
+        this.connectionStatus = 'Conectado';
+        this.router.navigate(['/bluetooth']);
       } else {
-        await this.showAlert('Error', 'No se pudo conectar al dispositivo');
+        this.connectionStatus = 'Error de conexión';
+        this.showAlert('Error', 'No se pudo conectar al dispositivo Bluetooth');
       }
     } catch (error) {
-      await this.showAlert('Error', error instanceof Error ? error.message : 'Error desconocido');
+      console.error('Error de conexión:', error);
+      this.connectionStatus = 'Error: ' + (error as Error).message;
+      this.showAlert('Error', 'Error al conectar: ' + (error as Error).message);
+    } finally {
+      this.isLoading = false;
     }
   }
 

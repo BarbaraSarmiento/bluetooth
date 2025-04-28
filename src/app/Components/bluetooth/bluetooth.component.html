@@ -2,7 +2,7 @@
   <button (click)="connect()" class="primary-button">
     Conectar al Robot
   </button>
-  <!-- Tarjeta de Peso -->
+  
   <div class="card">
     <h2>Sensor de Peso</h2>
     
@@ -36,7 +36,6 @@
     </div>
   </div>
 
-  <!-- Tarjeta de Alertas -->
   <div class="card">
     <h2>Alertas</h2>
     
@@ -51,12 +50,5 @@
         <p class="no-alerts">No hay alertas recientes</p>
       }
     </div>
-  </div>
-
-  <!-- Debug (solo para desarrollo) -->
-  <div class="debug-info" *ngIf="false">
-    <p>Estado: {{ connectionStatus }}</p>
-    <p>Peso: {{ currentWeight }}</p>
-    <p>Cargando: {{ isLoading }}</p>
   </div>
 </div>

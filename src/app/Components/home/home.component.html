@@ -11,7 +11,9 @@
       
       <p>Estado actual: <strong>{{ connectionStatus }}</strong></p>
       
-      <button (click)="connect()" class="primary-button">
-        Conectar al Robot
+      <button (click)="connect()" class="primary-button" [disabled]="isLoading">
+        {{ isLoading ? 'Conectando...' : 'Conectar al Robot' }}
       </button>
     </div>
+  </main>
+</div>
