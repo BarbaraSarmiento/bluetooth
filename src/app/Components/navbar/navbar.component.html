@@ -1,10 +1,11 @@
+<!--src/app/Components/home/home.component.html-->
 <nav class="navbar">
-  <a>ChuasBot</a>
+  <a routerLink="/">ChuasBot</a>
   <button class="menu-toggle" (click)="toggleMenu()">☰</button>
   <div class="navbar-links" [class.active]="isMenuActive">
-    <a href="">Home</a>
-    <a href="Ubicacion">Ubicación</a>
-    <a href="Bluetooth">Almacenamiento</a>
+    <a routerLink="/" routerLinkActive="active">Home</a>
+    <a routerLink="/ubicacion" routerLinkActive="active">Ubicación</a>
+    <a routerLink="/bluetooth" routerLinkActive="active">Almacenamiento</a>
   </div>
 </nav>
 
