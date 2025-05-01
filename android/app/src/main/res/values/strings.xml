@@ -1,11 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ChuasBot</string>
-    <string name="title_activity_main">ChuasBot</string>
-    <!-- Agrega estos 2 nuevos strings -->
-    <string name="ChuasBot">ChuasBot</string>
-    <string name="title_bot_chuas">ChuasBot</string>
-    
+    <string name="app_name">Bluetooth</string>
+    <string name="title_activity_main">Bluetooth</string>
     <string name="package_name">com.uets.blutu</string>
     <string name="custom_url_scheme">com.uets.blutu</string>
 </resources>
