@@ -1,20 +1,29 @@
 <div class="mobile-container">
   <header class="mobile-header">
-    <h1>Mi Aplicación</h1>
+    <img src="./assets/HorLogo.png" alt="Logo" class="header-icon">
+    <h1>CHUAS-BOT</h1>
   </header>
   
   <div class="buttons-container">
-    <button 
-      *ngFor="let btn of buttons"
-      class="mobile-button"
-      (click)="navigateTo(btn.path)"
-    >
+    <button class="nav-button" (click)="navigateTo('home')">
       <div class="button-content">
-        <img [src]="btn.icon" alt="Icono" class="button-icon">
-        <span>{{ btn.text }}</span>
+        <img src="assets/images/home-icon.png" alt="Home" class="button-icon">
+        <span>Conexión</span>
+      </div>
+    </button>
+    
+    <button class="nav-button" (click)="navigateTo('ubicacion')">
+      <div class="button-content">
+        <img src="assets/images/location-icon.png" alt="Ubicación" class="button-icon">
+        <span>¿Donde Estoy?</span>
+      </div>
+    </button>
+    
+    <button class="nav-button" (click)="navigateTo('almacenamiento')">
+      <div class="button-content">
+        <img src="assets/images/storage-icon.png" alt="Almacenamiento" class="button-icon">
+        <span>Almacenamiento</span>
       </div>
     </button>
   </div>
-  
-  <router-outlet></router-outlet>
 </div>
