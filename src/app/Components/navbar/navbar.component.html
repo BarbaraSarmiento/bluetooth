@@ -1,12 +1,20 @@
-<!--src/app/Components/home/home.component.html-->
-<nav class="navbar">
-  <a routerLink="/">ChuasBot</a>
-  <button class="menu-toggle" (click)="toggleMenu()">☰</button>
-  <div class="navbar-links" [class.active]="isMenuActive">
-    <a href="/home">Home</a>
-    <a href="ubicacion">Ubicación</a>
-    <a href="bluetooth">Almacenamiento</a>
+<div class="mobile-container">
+  <header class="mobile-header">
+    <h1>Mi Aplicación</h1>
+  </header>
+  
+  <div class="buttons-container">
+    <button 
+      *ngFor="let btn of buttons"
+      class="mobile-button"
+      (click)="navigateTo(btn.path)"
+    >
+      <div class="button-content">
+        <img [src]="btn.icon" alt="Icono" class="button-icon">
+        <span>{{ btn.text }}</span>
+      </div>
+    </button>
   </div>
-</nav>
-
-<router-outlet></router-outlet>
+  
+  <router-outlet></router-outlet>
+</div>
