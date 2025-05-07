@@ -16,41 +16,47 @@
     margin-top: 10px;
   }
  /* Controles flotantes en la parte superior */
+/* Controles en la parte inferior */
 .map-controls {
   position: absolute;
-  top: 70px;
-  right: 20px;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
   display: flex;
-  gap: 10px;
-  background-color: rgba(18, 18, 18, 0.8);
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(76, 175, 80, 0.3);
+  gap: 15px;
+  background-color: rgba(18, 18, 18, 0.9);
+  padding: 12px 20px;
+  border-radius: 50px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  backdrop-filter: blur(5px);
 }
+
 
 /* Botones de control */
 .control-button {
   background: linear-gradient(to bottom, #2E7D32, #1B5E20);
   color: white;
   border: none;
-  padding: 10px 16px;
+  padding: 12px 24px;
   font-size: 14px;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 50px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 6px rgba(0, 30, 0, 0.4);
+  gap: 10px;
+  box-shadow: 0 4px 8px rgba(0, 30, 0, 0.4);
+  min-width: 180px;
+  justify-content: center;
 }
 
 .control-button:hover {
   background: linear-gradient(to bottom, #388E3C, #2E7D32);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 60, 0, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 60, 0, 0.5);
 }
 
 .control-button:active {
@@ -74,29 +80,26 @@
   box-shadow: none;
 }
 
-/* Marcadores personalizados (opcional) */
-map-marker {
-  transition: transform 0.2s ease;
-}
-
-map-marker:hover {
-  transform: scale(1.1);
-}
-
 /* Responsive para pantallas pequeñas */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .map-container {
+    height: calc(100vh - 80px); /* Ajuste adicional para móviles */
+  }
+  
   .map-controls {
-    top: 10px;
-    right: 10px;
-    left: 10px;
+    bottom: 10px;
+    width: 90%;
+    padding: 10px 15px;
+    border-radius: 30px;
+    flex-wrap: wrap;
     justify-content: center;
   }
   
   .control-button {
-    padding: 8px 12px;
-    font-size: 12px;
+    min-width: 140px;
+    padding: 10px 15px;
+    font-size: 13px;
     flex-grow: 1;
-    justify-content: center;
   }
   
   .control-button span {
@@ -106,13 +109,11 @@ map-marker:hover {
 
 /* Animación para actualización de ubicación */
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0% { transform: translateY(-3px) scale(1); }
+  50% { transform: translateY(-3px) scale(1.05); }
+  100% { transform: translateY(-3px) scale(1); }
 }
 
 .updating-location {
   animation: pulse 1.5s infinite ease-in-out;
 }
-  
-  

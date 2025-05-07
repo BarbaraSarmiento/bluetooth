@@ -4,8 +4,16 @@
   src: url('/assets/Letras/Header.otf');
 }
 
+@font-face {
+  font-family: 'Cuerpo';
+  src: url('/assets/Letras/Cuerpo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .navbar {
-  font-family: Header;
+  font-family: Cuerpo;
   background-color: black;
   padding: 1rem 2rem;
   display: flex;
@@ -19,7 +27,6 @@
 
 /* Logo/Brand */
 .navbar > a {
-  
   color: white;
   font-size: 1.8rem;
   font-weight: 700;
@@ -43,9 +50,6 @@
   width: auto;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
-.navbar > a{
-  font-family: Header;
-}
 .navbar > a::after {
   content: '';
   position: absolute;
@@ -63,6 +67,7 @@
 
 /* Menu Toggle Button */
 .menu-toggle {
+  
   display: none;
   background: transparent;
   border: none;
@@ -82,12 +87,14 @@
 
 /* Navbar Links */
 .navbar-links {
+  font-family: Cuerpo;
   display: flex;
   gap: 2rem;
   transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .navbar-links a {
+  font-family: 'Cuerpo';
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   font-family: 'Roboto', sans-serif;
@@ -101,6 +108,7 @@
 }
 
 .navbar-links a::before {
+ 
   content: '';
   position: absolute;
   bottom: -5px;
@@ -113,11 +121,13 @@
 }
 
 .navbar-links a:hover {
+  font-family: 'Cuerpo';
   color: #d1ffd1;
   background: rgba(0, 0, 0, 0.2);
 }
 
 .navbar-links a:hover::before {
+  font-family: Cuerpo;
   width: 70%;
 }
 
@@ -143,6 +153,7 @@
   }
   
   .navbar-links {
+    font-family: Cuerpo;
     position: absolute;
     top: 100%;
     left: 0;
