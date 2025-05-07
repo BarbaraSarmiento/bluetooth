@@ -39,10 +39,10 @@ export class UbicacionComponent implements OnInit, OnDestroy {
     private alertCtrl: AlertController
   ) {}
 
-  ngOnInit() {
-    this.solicitarPermisosUbicacion();
+  async ngOnInit() {
+    await this.solicitarPermisosUbicacion();
     this.iniciarSuscripciones();
-    this.obtenerUbicacionUsuario();
+    await this.obtenerUbicacionUsuario();
   }
 
   ngOnDestroy() {
@@ -53,7 +53,7 @@ export class UbicacionComponent implements OnInit, OnDestroy {
     try {
       const result = await Geolocation.requestPermissions();
       if (result.location !== 'granted') {
-        this.mostrarAlerta('Permisos', 'Se necesitan permisos de ubicación para mostrar su posición en el mapa');
+        await this.mostrarAlerta('Permisos', 'Se necesitan permisos de ubicación para mostrar su posición en el mapa');
       }
     } catch (error) {
       console.error('Error al solicitar permisos:', error);
@@ -90,9 +90,11 @@ export class UbicacionComponent implements OnInit, OnDestroy {
       this.userLocation = coords;
       this.addOrUpdateMarker('usuario', coords, '📍 Usted');
       this.centerMap(coords);
+      return true;
     } catch (error) {
       console.error('Error al obtener ubicación:', error);
-      this.mostrarAlerta('Error', 'No se pudo obtener su ubicación');
+      await this.mostrarAlerta('Error', 'No se pudo obtener su ubicación');
+      return false;
     }
   }
 
@@ -109,16 +111,17 @@ export class UbicacionComponent implements OnInit, OnDestroy {
       if (this.robotLocation) {
         this.centerMap(this.robotLocation);
       } else {
-        this.mostrarAlerta('GPS', 'Esperando datos de ubicación del robot');
+        await this.mostrarAlerta('GPS', 'Esperando datos de ubicación del robot');
       }
     } catch (error) {
-      this.mostrarAlerta('Error', 'No se pudo obtener la ubicación del robot');
+      await this.mostrarAlerta('Error', 'No se pudo obtener la ubicación del robot');
     }
   }
 
   async volverAUsuario() {
     if (!this.userLocation) {
-      await this.obtenerUbicacionUsuario();
+      const ubicacionObtenida = await this.obtenerUbicacionUsuario();
+      if (!ubicacionObtenida) return;
     }
     
     if (this.userLocation) {
@@ -127,12 +130,12 @@ export class UbicacionComponent implements OnInit, OnDestroy {
           this.userLocation.lat,
           this.userLocation.lng
         );
-        this.mostrarAlerta('Éxito', 'Comando de retorno enviado al robot');
+        await this.mostrarAlerta('Éxito', 'Comando de retorno enviado al robot');
       } catch (error) {
-        this.mostrarAlerta('Error', 'No se pudo enviar el comando de retorno');
+        await this.mostrarAlerta('Error', 'No se pudo enviar el comando de retorno');
       }
     } else {
-      this.mostrarAlerta('Error', 'No se pudo determinar su ubicación');
+      await this.mostrarAlerta('Error', 'No se pudo determinar su ubicación');
     }
   }
 

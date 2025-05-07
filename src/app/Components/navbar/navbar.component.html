@@ -1,30 +1,12 @@
-<div class="mobile-container">
-  <header class="mobile-header">
-    <img src="./assets/HorLogo.png" alt="Logo" class="header-icon">
-    <h1>CHUAS-BOT</h1>
-  </header>
-  
-  <div class="buttons-container">
-    <button class="nav-button" (click)="navigateTo('home')">
-      <div class="button-content">
-        <img src="assets/images/home-icon.png" alt="Home" class="button-icon">
-        <span>Conexión</span>
-      </div>
-    </button>
-    
-    <button class="nav-button" (click)="navigateTo('ubicacion')">
-      <div class="button-content">
-        <img src="assets/images/location-icon.png" alt="Ubicación" class="button-icon">
-        <span>¿Donde Estoy?</span>
-      </div>
-    </button>
-    
-    <button class="nav-button" (click)="navigateTo('almacenamiento')">
-      <div class="button-content">
-        <img src="assets/images/storage-icon.png" alt="Almacenamiento" class="button-icon">
-        <span>Almacenamiento</span>
-      </div>
-    </button>
+<!--src/app/Components/home/home.component.html-->
+<nav class="navbar">
+  <a routerLink="/">ChuasBot</a>
+  <button class="menu-toggle" (click)="toggleMenu()">☰</button>
+  <div class="navbar-links" [class.active]="isMenuActive">
+    <a href="/home">Home</a>
+    <a href="ubicacion">Ubicación</a>
+    <a href="bluetooth">Almacenamiento</a>
   </div>
-</div>
-<router-outlet></router-outlet> <!-- Aquí aparecerán los componentes -->
+</nav>
+
+<router-outlet></router-outlet>

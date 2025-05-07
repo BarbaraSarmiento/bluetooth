@@ -2,15 +2,13 @@ import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Platform } from '@ionic/angular';
 import { BluetoothSerial } from '@awesome-cordova-plugins/bluetooth-serial/ngx';
+import { AlertController, LoadingController } from '@ionic/angular';
 
 declare var bluetoothSerial: any;
 
 @Injectable({ providedIn: 'root' })
 export class BluetoothService {
-  // Estados centralizados
   private _isConnected = new BehaviorSubject<boolean>(false);
-  public isConnected$ = this._isConnected.asObservable();
-
   private _connectionStatus = new BehaviorSubject<'disconnected'|'connecting'|'connected'|'error'>('disconnected');
   private _logs = new BehaviorSubject<string[]>([]);
   private _weight = new BehaviorSubject<number>(0);
@@ -18,8 +16,9 @@ export class BluetoothService {
   private _robotCoordinates = new BehaviorSubject<{lat: number, lng: number}|null>(null);
   private _pairedDevices = new BehaviorSubject<{name: string, address: string}[]>([]);
   private _alerts = new BehaviorSubject<string[]>([]);
+  private _navigationData = new BehaviorSubject<{distance: number, courseDiff: number}|null>(null);
   
-  // Observables públicos
+  public isConnected$ = this._isConnected.asObservable();
   public connectionStatus$ = this._connectionStatus.asObservable();
   public logs$ = this._logs.asObservable();
   public weight$ = this._weight.asObservable();
@@ -27,11 +26,17 @@ export class BluetoothService {
   public robotCoordinates$ = this._robotCoordinates.asObservable();
   public pairedDevices$ = this._pairedDevices.asObservable();
   public alerts$ = this._alerts.asObservable();
+  public navigationData$ = this._navigationData.asObservable();
 
   private connectedDeviceAddress: string | null = null;
   private dataSubscription: any = null;
 
-  constructor(private platform: Platform, private ngZone: NgZone) {
+  constructor(
+    private platform: Platform,
+    private ngZone: NgZone,
+    private alertCtrl: AlertController,
+    private loadingCtrl: LoadingController
+  ) {
     this.initializeBluetooth();
     this.checkInitialConnection();
   }
@@ -42,6 +47,7 @@ export class BluetoothService {
         this.addLog('Error: Plugin Bluetooth no disponible');
       } else {
         this.addLog('Bluetooth inicializado correctamente');
+        this.setupBluetoothListeners();
       }
     });
   }
@@ -49,28 +55,36 @@ export class BluetoothService {
   private checkInitialConnection(): void {
     bluetoothSerial.isConnected(
       () => {
-        this._isConnected.next(true);
-        this._connectionStatus.next('connected');
-        this.setupBluetoothListeners();
+        this.ngZone.run(() => {
+          this._isConnected.next(true);
+          this._connectionStatus.next('connected');
+          this.addLog('Reconectado al dispositivo Bluetooth');
+        });
       },
       () => {
-        this._isConnected.next(false);
-        this._connectionStatus.next('disconnected');
+        this.ngZone.run(() => {
+          this._isConnected.next(false);
+          this._connectionStatus.next('disconnected');
+        });
       }
     );
   }
 
   private addLog(message: string): void {
-    const logs = this._logs.getValue();
-    logs.push(`${new Date().toLocaleTimeString()}: ${message}`);
-    this._logs.next(logs.slice(-100));
-    console.log('[Bluetooth]', message);
+    this.ngZone.run(() => {
+      const logs = this._logs.getValue();
+      logs.push(`${new Date().toLocaleTimeString()}: ${message}`);
+      this._logs.next(logs.slice(-100));
+      console.log('[Bluetooth]', message);
+    });
   }
 
   private addAlert(message: string): void {
-    const alerts = this._alerts.getValue();
-    alerts.push(message);
-    this._alerts.next(alerts.slice(-5));
+    this.ngZone.run(() => {
+      const alerts = this._alerts.getValue();
+      alerts.push(message);
+      this._alerts.next(alerts.slice(-5));
+    });
   }
 
   async connectToDevice(deviceName = 'CHUAS-BOT'): Promise<boolean> {
@@ -78,13 +92,7 @@ export class BluetoothService {
       this._connectionStatus.next('connecting');
       this.addLog(`Conectando a ${deviceName}...`);
 
-      const isEnabled = await new Promise<boolean>((resolve) => {
-        bluetoothSerial.isEnabled(
-          () => resolve(true),
-          () => resolve(false)
-        );
-      });
-
+      const isEnabled = await this.enableBluetooth();
       if (!isEnabled) {
         throw new Error('Bluetooth no está activado');
       }
@@ -101,31 +109,32 @@ export class BluetoothService {
           device.address,
           () => {
             this.ngZone.run(() => {
-              // Elimina cualquier router.navigate() de aquí
               this.connectedDeviceAddress = device.address;
               this._connectionStatus.next('connected');
               this._isConnected.next(true);
-              resolve(true); // Solo resuelve true/false
+              this.addLog(`Conectado a ${deviceName} (${device.address})`);
+              resolve(true);
             });
           },
           (error: any) => {
             this.ngZone.run(() => {
               this._connectionStatus.next('error');
-              this.addLog(`Error de conexión: ${error}`);
+              this.addLog(`Error de conexión: ${JSON.stringify(error)}`);
               resolve(false);
             });
           }
         );
       });
     } catch (error) {
-      this._connectionStatus.next('error');
-      this.addLog(`Error en conexión: ${error}`);
+      this.ngZone.run(() => {
+        this._connectionStatus.next('error');
+        this.addLog(`Error en conexión: ${error}`);
+      });
       throw error;
     }
   }
 
   private setupBluetoothListeners(): void {
-    // Limpiar suscripción anterior si existe
     if (this.dataSubscription) {
       bluetoothSerial.unsubscribe();
       this.dataSubscription = null;
@@ -134,25 +143,54 @@ export class BluetoothService {
     this.dataSubscription = bluetoothSerial.subscribe('\n', (data: string) => {
       this.ngZone.run(() => {
         const message = data.trim();
-        console.log('[DEBUG] Mensaje RAW recibido:', message);
+        console.log('[DATA]', message);
 
-        if (message.includes('PESO')) {
+        // Procesar peso
+        if (message.startsWith('PESO:')) {
           const weightValue = parseFloat(message.split(':')[1]);
           if (!isNaN(weightValue)) {
-            console.log('[DEBUG] Peso parseado:', weightValue);
             this._weight.next(weightValue);
             this.updateWeightStatus(weightValue);
-          } else {
-            console.warn('[DEBUG] No se pudo parsear peso de:', message);
           }
           return;
         }
 
+        // Procesar coordenadas GPS
         if (this.isGpsData(message)) {
           this.processGpsData(message);
-        } else {
-          this.addLog(`Datos recibidos: ${message}`);
+          return;
         }
+
+        // Procesar alertas
+        if (message.startsWith('ALERTA:')) {
+          this.addAlert(message.substring(7));
+          return;
+        }
+
+        // Procesar confirmación de HOME
+        if (message.startsWith('HOME_SET:')) {
+          const coords = message.substring(9).split(',');
+          const lat = parseFloat(coords[0]);
+          const lng = parseFloat(coords[1]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            this.addAlert(`Ruta establecida a: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+          }
+          return;
+        }
+
+        // Procesar datos de navegación
+        if (message.startsWith('NAVIGATION:')) {
+          const parts = message.substring(11).split(',');
+          const distance = parseFloat(parts[0]);
+          const courseDiff = parseFloat(parts[1]);
+          if (!isNaN(distance) && !isNaN(courseDiff)) {
+            this._navigationData.next({ distance, courseDiff });
+          }
+          return;
+        }
+
+        // Otros mensajes
+        this.addLog(`Datos recibidos: ${message}`);
       });
     }, (error: any) => {
       this.ngZone.run(() => {
@@ -164,20 +202,12 @@ export class BluetoothService {
     });
   }
 
-  // Resto de los métodos permanecen igual...
-  // ... (updateWeightStatus, isGpsData, processGpsData, listPairedDevices, etc.)
-
-
   private updateWeightStatus(weight: number): void {
-    if (weight <= 0.5) {
-      this._weightStatus.next('Almacenamiento medio vacío');
-    } else if (weight > 0.5 && weight <= 0.7) {
-      this._weightStatus.next('Robot casi lleno');
-    } else if (weight > 0.7) {
-      this._weightStatus.next('Robot lleno');
-    } else {
-      this._weightStatus.next('Desconocido');
-    }
+    let status = 'Desconocido';
+    if (weight <= 0.5) status = 'Almacenamiento medio vacío';
+    else if (weight > 0.5 && weight <= 0.7) status = 'Robot casi lleno';
+    else if (weight > 0.7) status = 'Robot lleno';
+    this._weightStatus.next(status);
   }
 
   private isGpsData(message: string): boolean {
@@ -197,7 +227,7 @@ export class BluetoothService {
 
     if (!isNaN(lat) && !isNaN(lng)) {
       this._robotCoordinates.next({ lat, lng });
-      this.addLog(`Coordenadas recibidas: Lat ${lat}, Lng ${lng}`);
+      this.addLog(`Coordenadas recibidas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
     }
   }
 
@@ -222,6 +252,7 @@ export class BluetoothService {
       bluetoothSerial.disconnect();
       this.connectedDeviceAddress = null;
       this._connectionStatus.next('disconnected');
+      this._isConnected.next(false);
       this.addLog('Desconectado del dispositivo Bluetooth');
     }
   }
@@ -231,7 +262,7 @@ export class BluetoothService {
       throw new Error('No hay dispositivo conectado');
     }
 
-    await new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       bluetoothSerial.write(command + '\n',
         () => {
           this.addLog(`Comando enviado: ${command}`);
@@ -253,15 +284,54 @@ export class BluetoothService {
     return this.sendCommand('GET_LOCATION');
   }
 
-  async sendGoHomeCommand(lat: number, lng: number): Promise<void> {
-    return this.sendCommand(`GO_HOME:${lat},${lng}`);
+  async sendGoHomeCommand(lat: number, lng: number): Promise<boolean> {
+    const loading = await this.loadingCtrl.create({
+      message: 'Enviando coordenadas...',
+      duration: 5000
+    });
+    await loading.present();
+
+    try {
+      const command = `GO_HOME:${lat.toFixed(6)},${lng.toFixed(6)}`;
+      await this.sendCommand(command);
+      
+      return new Promise<boolean>((resolve) => {
+        const timeout = setTimeout(() => {
+          loading.dismiss();
+          resolve(false);
+        }, 5000);
+
+        const sub = this.alerts$.subscribe(alerts => {
+          const lastAlert = alerts[alerts.length - 1];
+          if (lastAlert.includes('HOME_SET') || lastAlert.includes('Ruta establecida')) {
+            clearTimeout(timeout);
+            loading.dismiss();
+            resolve(true);
+          } else if (lastAlert.includes('GPS_NO_FIX')) {
+            clearTimeout(timeout);
+            loading.dismiss();
+            resolve(false);
+          }
+        });
+
+        setTimeout(() => sub.unsubscribe(), 5000);
+      });
+    } catch (error) {
+      loading.dismiss();
+      throw error;
+    }
   }
 
   async enableBluetooth(): Promise<boolean> {
     return new Promise((resolve) => {
-      bluetoothSerial.enable(
+      bluetoothSerial.isEnabled(
         () => resolve(true),
-        () => resolve(false)
+        () => {
+          bluetoothSerial.enable(
+            () => resolve(true),
+            () => resolve(false)
+          );
+        }
       );
     });
   }
@@ -270,5 +340,9 @@ export class BluetoothService {
     if (this.platform.is('android')) {
       bluetoothSerial.showBluetoothSettings();
     }
+  }
+
+  clearAlerts(): void {
+    this._alerts.next([]);
   }
 }
