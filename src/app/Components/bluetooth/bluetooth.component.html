@@ -1,8 +1,4 @@
 <div class="bluetooth-container">
-  <button (click)="connect()" class="primary-button">
-    Conectar al Robot
-  </button>
-  
   <div class="card">
     <h2>Sensor de Peso</h2>
     
@@ -32,22 +28,6 @@
         <div class="connection-status disconnected">
           Bluetooth desconectado
         </div>
-      }
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Alertas</h2>
-    
-    <div class="alerts-container">
-      @if (alerts.length > 0) {
-        <ul class="alerts-list">
-          @for (alert of alerts; track $index) {
-            <li>{{ alert }}</li>
-          }
-        </ul>
-      } @else {
-        <p class="no-alerts">No hay alertas recientes</p>
       }
     </div>
   </div>

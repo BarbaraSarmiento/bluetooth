@@ -1,23 +1,126 @@
-button {
-  padding: 12px 24px;
-  background-color: #4285f4;
+/* Estilos generales */
+.home-page {
+  font-family: 'Roboto', sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* Encabezado de página */
+.page-header h1 {
+  font-family: 'Header', 'Montserrat', sans-serif;
+  color: #4CAF50;
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+}
+
+/* Contenido principal */
+.main-content {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 8px 20px rgba(0, 30, 0, 0.4);
+}
+
+.main-content h2 {
+  color: #8BC34A;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #2E7D32;
+  padding-bottom: 0.5rem;
+}
+
+/* Tarjeta de conexión */
+.card {
+  background: linear-gradient(145deg, #1a2a1a, #121212);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border-left: 4px solid #4CAF50;
+  box-shadow: 0 4px 15px rgba(0, 20, 0, 0.3);
+}
+
+.card h3 {
+  color: #A5D6A7;
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.card p {
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.card strong {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+/* Botones */
+.primary-button {
+  background: linear-gradient(to right, #2E7D32, #4CAF50);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 16px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 30px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 80, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 200px;
 }
 
-.log-container {
-  margin-top: 20px;
-  border: 1px solid #ddd;
-  padding: 10px;
-  max-height: 200px;
-  overflow-y: auto;
+.primary-button:hover {
+  background: linear-gradient(to right, #1B5E20, #388E3C);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 100, 0, 0.4);
 }
 
-.log-entry {
-  padding: 5px 0;
-  border-bottom: 1px solid #eee;
-  font-family: monospace;
+.primary-button:disabled {
+  background: #424242;
+  color: #9E9E9E;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+/* Efectos de estado */
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.primary-button:disabled {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .home-page {
+    padding: 1rem;
+  }
+  
+  .main-content {
+    padding: 1.5rem;
+  }
+  
+  .page-header h1 {
+    font-size: 2rem;
+  }
+  
+  .main-content h2 {
+    font-size: 1.5rem;
+  }
 }

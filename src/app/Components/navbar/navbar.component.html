@@ -1,6 +1,10 @@
 <!--src/app/Components/home/home.component.html-->
+
 <nav class="navbar">
-  <a routerLink="/">ChuasBot</a>
+  <a routerLink="/">
+    <img src="./assets/HorLogo.png" alt="Logo ChuasBot" class="navbar-logo">
+    ChuasBot
+  </a>
   <button class="menu-toggle" (click)="toggleMenu()">☰</button>
   <div class="navbar-links" [class.active]="isMenuActive">
     <a href="/home">Home</a>

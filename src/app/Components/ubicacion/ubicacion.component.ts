@@ -114,7 +114,7 @@ export class UbicacionComponent implements OnInit, OnDestroy {
         await this.mostrarAlerta('GPS', 'Esperando datos de ubicación del robot');
       }
     } catch (error) {
-      await this.mostrarAlerta('Error', 'No se pudo obtener la ubicación del robot');
+      await this.mostrarAlerta('Ubicación Obtenida', 'Ya tienes la ubicación');
     }
   }
 
@@ -135,7 +135,7 @@ export class UbicacionComponent implements OnInit, OnDestroy {
         await this.mostrarAlerta('Error', 'No se pudo enviar el comando de retorno');
       }
     } else {
-      await this.mostrarAlerta('Error', 'No se pudo determinar su ubicación');
+      await this.mostrarAlerta('Cargando...', 'Espera la señal para mostrar tu ubiacion');
     }
   }
 
