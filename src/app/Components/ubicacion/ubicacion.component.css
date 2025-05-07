@@ -15,11 +15,104 @@
     width: 100%;
     margin-top: 10px;
   }
+ /* Controles flotantes en la parte superior */
+.map-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 10px;
+  background-color: rgba(18, 18, 18, 0.8);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* Botones de control */
+.control-button {
+  background: linear-gradient(to bottom, #2E7D32, #1B5E20);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0, 30, 0, 0.4);
+}
+
+.control-button:hover {
+  background: linear-gradient(to bottom, #388E3C, #2E7D32);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 60, 0, 0.5);
+}
+
+.control-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 30, 0, 0.4);
+}
+
+/* Iconos dentro de los botones */
+.control-button span {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+}
+
+/* Efecto para cuando el botón está deshabilitado */
+.control-button:disabled {
+  background: #424242;
+  color: #9E9E9E;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Marcadores personalizados (opcional) */
+map-marker {
+  transition: transform 0.2s ease;
+}
+
+map-marker:hover {
+  transform: scale(1.1);
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 600px) {
+  .map-controls {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    justify-content: center;
+  }
   
-  button {
-    margin: 5px;
-    padding: 8px 16px;
+  .control-button {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex-grow: 1;
+    justify-content: center;
+  }
+  
+  .control-button span {
     font-size: 16px;
   }
+}
+
+/* Animación para actualización de ubicación */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.updating-location {
+  animation: pulse 1.5s infinite ease-in-out;
+}
   
   
